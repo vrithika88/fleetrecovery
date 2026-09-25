@@ -1,0 +1,42 @@
+<section id="page-fleet" class="page">
+  <div class="fleet-header">
+    <div>
+      <div class="section-title">FLEET TELEMETRY / LIVE REGISTRY</div>
+      <p class="fleet-subtitle">Every unit. One operating picture.</p>
+    </div>
+    <div class="fleet-stats">
+      <div class="stat-box">
+        <div class="stat-number">40</div>
+        <div class="stat-label">ONLINE UNITS</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-number">43%</div>
+        <div class="stat-label">ACTIVE LOAD</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-number" id="riskCount">0</div>
+        <div class="stat-label">AT RISK</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="filter-bar">
+    <button class="filter-btn active" data-filter="all">ALL</button>
+    <button class="filter-btn" data-filter="ready">READY</button>
+    <button class="filter-btn" data-filter="active">ACTIVE</button>
+    <button class="filter-btn" data-filter="risk">RISK</button>
+  </div>
+
+  <div class="robot-table">
+    <div class="table-header">
+      <div>UNIT</div>
+      <div>HEALTH / RISK</div>
+      <div>BATTERY</div>
+      <div>LOAD</div>
+      <div>TEMP</div>
+      <div>STATE</div>
+    </div>
+    <div id="robotList"></div>
+  </div>
+</section>
+ 

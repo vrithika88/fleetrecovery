@@ -1,0 +1,1537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<title>FleetGuard — Autonomous Robot Fleet Recovery</title>
+<style>
+:root {
+  --cafe: #4C3D19;
+  --kombu: #354024;
+  --moss: #889D63;
+  --tan: #CFBB99;
+  --bone: #E5D7C4;
+  --bg: #E5D7C4;
+  --bg2: #F0E6D6;
+  --panel: #CFBB99;
+  --panel2: #C4AD8A;
+  --border: #B5A07E;
+  --text: #4C3D19;
+  --muted: #6B5B3A;
+  --green: #889D63;
+  --green-dark: #354024;
+  --yellow: #B8954A;
+  --red: #8B3A2A;
+  --cyan: #5A7A4A;
+  --purple: #6B5B4A;
+  --cream: #F5EDE0;
+  --card-bg: linear-gradient(165deg, #D4C09A 0%, #CFBB99 50%, #C4AD8A 100%);
+  --sidebar-bg: linear-gradient(180deg, #4C3D19 0%, #354024 100%);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background:
+    radial-gradient(ellipse at 85% 5%, rgba(136,157,99,.18), transparent 42%),
+    radial-gradient(ellipse at 5% 90%, rgba(76,61,25,.08), transparent 40%),
+    var(--bone);
+  color: var(--text);
+  font-family: 'Outfit', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  min-height: 100vh;
+  font-size: 15px;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+}
+button { font: inherit; cursor: pointer; border: none; outline: none; }
+h1, h2, h3, .logo-text, .kpi-value, .ui-id, .plan-name, .mission-name {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.app {
+  display: grid;
+  grid-template-columns: 250px 1fr;
+  min-height: 100vh;
+}
+
+/* SIDEBAR */
+.sidebar {
+  background: var(--sidebar-bg);
+  border-right: 2px solid #2A2010;
+  padding: 24px 16px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 8px 30px;
+}
+.logo-icon {
+  width: 40px; height: 40px;
+  border-radius: 11px;
+  display: grid; place-items: center;
+  font-weight: 700; font-size: 17px; color: var(--cafe);
+  background: linear-gradient(135deg, var(--moss), var(--tan));
+  box-shadow: 0 0 18px rgba(136,157,99,.35);
+  font-family: 'Cormorant Garamond', serif;
+}
+.logo-text { font-weight: 700; font-size: 20px; color: var(--bone); }
+.logo-text span { color: var(--moss); }
+.nav { display: flex; flex-direction: column; gap: 6px; flex: 1; }
+.nav-item {
+  padding: 13px 14px;
+  border-radius: 10px;
+  color: rgba(229,215,196,.72);
+  font-size: 14.5px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  cursor: pointer;
+  transition: .2s;
+  border: 1px solid transparent;
+  user-select: none;
+}
+.nav-item:hover { background: rgba(136,157,99,.12); color: var(--bone); }
+.nav-item.active {
+  background: rgba(136,157,99,.2);
+  color: var(--moss);
+  border-color: rgba(136,157,99,.35);
+}
+.nav-item .icon { font-size: 15px; width: 20px; text-align: center; }
+.sidebar-footer {
+  padding: 14px;
+  border: 1px solid rgba(136,157,99,.3);
+  border-radius: 10px;
+  background: rgba(0,0,0,.2);
+  font-size: 13px;
+  color: var(--bone);
+}
+.sidebar-footer .dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  display: inline-block; background: var(--moss);
+  box-shadow: 0 0 8px var(--moss); margin-right: 7px;
+}
+
+/* MAIN */
+main { padding: 26px 30px 44px; min-width: 0; }
+.view { display: none; animation: fadeIn .28s ease; }
+.view.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+.page-header h1 { font-size: 28px; font-weight: 600; color: var(--cafe); }
+.page-header .sub { color: var(--muted); font-size: 14px; margin-top: 6px; font-weight: 400; }
+.header-actions { display: flex; gap: 10px; align-items: center; }
+.badge-live {
+  border: 1.5px solid rgba(136,157,99,.45);
+  color: var(--kombu);
+  padding: 8px 14px;
+  border-radius: 20px;
+  font-size: 12.5px;
+  background: rgba(136,157,99,.15);
+  display: flex; align-items: center; gap: 7px;
+  font-weight: 600;
+}
+.badge-live .dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--moss); box-shadow: 0 0 8px var(--moss);
+}
+.btn-emergency {
+  background: linear-gradient(135deg, #8B3A2A, #A04A38);
+  color: var(--bone); font-weight: 600; font-size: 13.5px;
+  padding: 10px 16px; border-radius: 9px;
+  box-shadow: 0 4px 14px rgba(139,58,42,.25);
+  transition: .15s;
+}
+.btn-emergency:hover { filter: brightness(1.08); transform: translateY(-1px); }
+
+/* CARDS */
+.card {
+  background: var(--card-bg);
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  padding: 18px;
+  box-shadow: 0 8px 24px rgba(76,61,25,.08);
+}
+.card-head {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 16px;
+}
+.card-title { font-size: 15px; font-weight: 600; color: var(--cafe); font-family: 'Outfit', sans-serif; }
+.card-tag { font-size: 12px; color: var(--muted); }
+.grid { display: grid; gap: 16px; }
+.grid-5 { grid-template-columns: repeat(5, 1fr); }
+.grid-2 { grid-template-columns: 1.4fr 1fr; }
+.grid-2b { grid-template-columns: 1.2fr .8fr; }
+.grid-3 { grid-template-columns: repeat(3, 1fr); }
+
+/* KPI */
+.kpi-label { font-size: 11.5px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); font-weight: 500; }
+.kpi-value { font-size: 32px; font-weight: 600; margin-top: 7px; color: var(--cafe); }
+.kpi-trend { font-size: 12px; margin-top: 6px; color: var(--kombu); font-weight: 500; }
+
+/* ROBOTS */
+.robots { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.robot {
+  background: var(--cream);
+  border: 1.5px solid var(--border);
+  border-radius: 11px;
+  padding: 14px;
+  transition: .2s;
+}
+.robot:hover { border-color: var(--moss); transform: translateY(-2px); box-shadow: 0 6px 16px rgba(76,61,25,.1); }
+.robot.failed { border-color: var(--red); background: #F5E8E4; }
+.robot.risk { border-color: var(--yellow); background: #F8F0E0; }
+.robot-top { display: flex; justify-content: space-between; align-items: center; }
+.robot-name { font-size: 14px; font-weight: 600; color: var(--cafe); }
+.st {
+  font-size: 11px; font-weight: 700; padding: 4px 8px;
+  border-radius: 5px; color: #fff;
+}
+.st.active { background: var(--moss); color: var(--cafe); }
+.st.risk { background: var(--yellow); color: var(--cafe); }
+.st.failed { background: var(--red); }
+.robot-emoji { font-size: 30px; margin: 12px 0 8px; }
+.bar-row { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-top: 9px; }
+.bar {
+  height: 5px; border-radius: 4px; background: #E0D4C0;
+  overflow: hidden; margin-top: 5px;
+}
+.bar-fill {
+  height: 100%; border-radius: 4px;
+  background: linear-gradient(90deg, var(--moss), var(--kombu));
+  transition: width .6s;
+}
+.bar-fill.low { background: linear-gradient(90deg, var(--yellow), var(--red)); }
+
+/* MINI GRAPH */
+.graph-box {
+  height: 300px; position: relative; overflow: hidden;
+  border-radius: 11px;
+  background:
+    linear-gradient(rgba(76,61,25,.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(76,61,25,.06) 1px, transparent 1px),
+    var(--cream);
+  background-size: 30px 30px;
+  border: 1.5px solid var(--border);
+}
+.node {
+  position: absolute; width: 72px; height: 72px;
+  border-radius: 50%; display: grid; place-items: center;
+  font-size: 12px; font-weight: 700; color: var(--cafe);
+  border: 2.5px solid var(--moss); background: var(--cream);
+  box-shadow: 0 2px 12px rgba(76,61,25,.12); z-index: 2;
+  transition: .4s;
+  font-family: 'Outfit', sans-serif;
+}
+.node.ok { border-color: var(--moss); }
+.node.affected { border-color: var(--yellow); box-shadow: 0 0 14px rgba(184,149,74,.35); }
+.node.fail { border-color: var(--red); box-shadow: 0 0 16px rgba(139,58,42,.35); background: #F5E8E4; }
+.edge {
+  position: absolute; height: 2.5px; z-index: 1; opacity: .65;
+  background: linear-gradient(90deg, var(--moss), transparent);
+  transform-origin: left center;
+}
+.legend { display: flex; gap: 16px; margin-top: 12px; font-size: 12.5px; color: var(--muted); }
+.legend i {
+  display: inline-block; width: 9px; height: 9px;
+  border-radius: 50%; margin-right: 5px;
+}
+
+/* TIMELINE & TASKS */
+.timeline { max-height: 250px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+.event { display: grid; grid-template-columns: 68px 1fr; gap: 12px; font-size: 13px; }
+.event-time { color: var(--muted); }
+.event-body { padding-bottom: 9px; border-bottom: 1px solid rgba(76,61,25,.1); }
+.event-body strong { display: block; margin-bottom: 3px; color: var(--cafe); font-size: 13.5px; font-weight: 600; }
+.event-body span { color: var(--muted); font-size: 12.5px; }
+.task-list { display: flex; flex-direction: column; gap: 8px; }
+.task {
+  display: grid; grid-template-columns: 1fr auto;
+  align-items: center; padding: 11px 13px;
+  border: 1.5px solid var(--border); border-radius: 9px; background: var(--cream);
+}
+.task-name { font-size: 13.5px; font-weight: 600; color: var(--cafe); }
+.task-meta { font-size: 11.5px; color: var(--muted); margin-top: 3px; }
+.task-st { font-size: 11.5px; color: var(--kombu); font-weight: 600; }
+.task-st.mig { color: var(--yellow); }
+.prog { height: 4px; background: #E0D4C0; border-radius: 3px; margin-top: 6px; }
+.prog div { height: 100%; background: var(--moss); border-radius: 3px; }
+
+/* CONTROLS */
+.fail-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.fail-btn {
+  background: var(--cream); color: var(--cafe);
+  border: 1.5px solid var(--border); border-radius: 8px;
+  padding: 9px 13px; font-size: 12.5px; font-weight: 500; transition: .15s;
+}
+.fail-btn:hover { border-color: var(--red); color: var(--red); background: #F5E8E4; }
+.btn-reset {
+  width: 100%; margin-top: 14px; padding: 12px;
+  border: 1.5px solid var(--moss); color: var(--kombu);
+  background: rgba(136,157,99,.2); border-radius: 9px;
+  font-weight: 600; font-size: 14px; transition: .15s;
+}
+.btn-reset:hover { background: rgba(136,157,99,.35); }
+
+/* ALERT */
+.alert {
+  display: none; margin-bottom: 16px;
+  border: 1.5px solid var(--red);
+  background: #F5E8E4;
+  padding: 13px 16px; border-radius: 11px;
+  color: #6B2E22; font-size: 13.5px;
+  align-items: center; justify-content: space-between;
+}
+.alert.show { display: flex; }
+.alert strong { color: var(--red); }
+
+/* TABLES */
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th {
+  text-align: left; padding: 11px 13px; color: var(--muted);
+  border-bottom: 1.5px solid var(--border); font-weight: 600;
+  font-size: 12px; text-transform: uppercase; letter-spacing: .6px;
+}
+td { padding: 13px; border-bottom: 1px solid rgba(76,61,25,.08); color: var(--cafe); }
+tr:hover td { background: rgba(136,157,99,.12); }
+.pill {
+  display: inline-block; padding: 3px 9px; border-radius: 5px;
+  font-size: 11px; font-weight: 600;
+}
+.pill.ok { background: rgba(136,157,99,.2); color: var(--kombu); }
+.pill.warn { background: rgba(184,149,74,.25); color: var(--yellow); }
+.pill.bad { background: rgba(139,58,42,.15); color: var(--red); }
+
+/* DIGITAL TWIN */
+.twin-layout {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 0;
+  border: 2px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--cream);
+  min-height: 520px;
+  box-shadow: 0 8px 28px rgba(76,61,25,.08);
+}
+.twin-canvas {
+  position: relative;
+  background:
+    linear-gradient(rgba(76,61,25,.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(76,61,25,.07) 1px, transparent 1px),
+    var(--cream);
+  background-size: 48px 48px;
+  min-height: 520px;
+  overflow: hidden;
+}
+.twin-toolbar {
+  position: absolute; top: 0; left: 0; right: 0;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 16px;
+  background: linear-gradient(180deg, rgba(245,237,224,.97), transparent);
+  z-index: 20;
+}
+.twin-toolbar-left {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 13px; font-weight: 600; color: var(--cafe);
+}
+.twin-toolbar-left .rt {
+  background: var(--moss); color: var(--cafe);
+  font-size: 10px; padding: 3px 8px; border-radius: 4px;
+  letter-spacing: .5px; font-weight: 700;
+}
+.twin-toolbar-right {
+  display: flex; align-items: center; gap: 14px; font-size: 12px; color: var(--muted);
+}
+.toggle {
+  display: flex; align-items: center; gap: 6px; cursor: pointer;
+}
+.toggle input { accent-color: var(--moss); width: 16px; height: 16px; }
+.twin-sector {
+  position: absolute; top: 48px; left: 14px;
+  font-size: 11.5px; color: var(--muted); z-index: 15;
+  line-height: 1.5;
+}
+.unit-node {
+  position: absolute;
+  width: 52px; height: 52px;
+  border-radius: 50%;
+  display: grid; place-items: center;
+  border: 2.5px solid var(--moss);
+  background: rgba(136,157,99,.15);
+  box-shadow: 0 0 14px rgba(136,157,99,.25);
+  cursor: pointer;
+  z-index: 10;
+  transition: left .7s ease, top .7s ease, border-color .3s, box-shadow .3s, background .3s, transform .2s;
+}
+.unit-node:hover { transform: scale(1.12); z-index: 30; }
+.unit-node .uicon { font-size: 18px; line-height: 1; }
+.unit-node.ok { border-color: var(--moss); background: rgba(136,157,99,.15); box-shadow: 0 0 14px rgba(136,157,99,.28); }
+.unit-node.risk { border-color: var(--yellow); background: rgba(184,149,74,.18); box-shadow: 0 0 14px rgba(184,149,74,.35); }
+.unit-node.critical { border-color: var(--red); background: rgba(139,58,42,.12); box-shadow: 0 0 16px rgba(139,58,42,.35); }
+.unit-node.task {
+  border-color: var(--kombu);
+  background: rgba(53,64,36,.12);
+  box-shadow: 0 0 14px rgba(53,64,36,.25);
+  border-radius: 12px;
+}
+.unit-node.selected {
+  outline: 3px solid var(--cafe);
+  outline-offset: 3px;
+}
+.mig-path {
+  position: absolute; pointer-events: none; z-index: 5;
+  fill: none; stroke-width: 2; stroke-dasharray: 8 6;
+  opacity: .7;
+}
+.mig-path.cyan { stroke: var(--moss); }
+.mig-path.purple { stroke: var(--kombu); }
+.twin-legend-bar {
+  position: absolute; bottom: 12px; left: 14px;
+  display: flex; gap: 14px; align-items: center;
+  font-size: 11.5px; color: var(--muted);
+  background: rgba(245,237,224,.92); padding: 7px 12px;
+  border-radius: 8px; border: 1px solid var(--border); z-index: 15;
+}
+.twin-legend-bar span { display: flex; align-items: center; gap: 5px; }
+.twin-legend-bar i {
+  width: 10px; height: 10px; border-radius: 50%; display: inline-block;
+}
+.twin-zoom {
+  position: absolute; bottom: 12px; right: 14px;
+  display: flex; gap: 4px; z-index: 15;
+}
+.twin-zoom button {
+  width: 32px; height: 32px;
+  border: 1.5px solid var(--border); border-radius: 6px;
+  background: rgba(245,237,224,.95); color: var(--cafe);
+  font-size: 16px; font-weight: 700;
+}
+.twin-zoom button:hover { background: var(--tan); }
+
+/* UNIT INSPECTOR */
+.unit-inspector {
+  background: linear-gradient(180deg, #D4C09A, #CFBB99 40%, #C4AD8A);
+  border-left: 2px solid var(--border);
+  padding: 18px;
+  display: flex; flex-direction: column; gap: 14px;
+  overflow-y: auto;
+}
+.ui-head {
+  display: flex; justify-content: space-between; align-items: flex-start;
+}
+.ui-head h3 { font-size: 13px; font-weight: 600; color: var(--cafe); letter-spacing: .4px; font-family: 'Outfit', sans-serif; }
+.ui-id { font-size: 24px; font-weight: 600; color: var(--cafe); margin-top: 2px; }
+.ui-status {
+  display: inline-block; font-size: 11px; font-weight: 700;
+  padding: 3px 10px; border-radius: 5px; margin-top: 6px;
+}
+.ui-status.healthy { background: rgba(136,157,99,.25); color: var(--kombu); }
+.ui-status.risk { background: rgba(184,149,74,.3); color: var(--yellow); }
+.ui-status.failed { background: rgba(139,58,42,.2); color: var(--red); }
+.ui-fail-box {
+  border: 1.5px solid rgba(139,58,42,.3);
+  background: rgba(139,58,42,.08);
+  border-radius: 9px; padding: 11px 13px;
+  font-size: 12.5px; color: #6B2E22;
+}
+.ui-fail-box strong { display: block; margin-bottom: 4px; color: var(--red); font-size: 11.5px; }
+.ui-metrics {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+}
+.ui-metric {
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: 9px; padding: 10px 12px;
+}
+.ui-metric .mlbl {
+  font-size: 10.5px; color: var(--muted); text-transform: uppercase;
+  letter-spacing: .4px; margin-bottom: 4px;
+  display: flex; align-items: center; gap: 5px;
+}
+.ui-metric .mval { font-size: 14px; font-weight: 600; color: var(--cafe); }
+.ui-metric .mbar {
+  height: 4px; background: #E0D4C0; border-radius: 3px; margin-top: 6px; overflow: hidden;
+}
+.ui-metric .mbar div { height: 100%; border-radius: 3px; }
+.ui-metric .mbar .bat { background: var(--moss); }
+.ui-metric .mbar .thm { background: var(--yellow); }
+.ui-metric .mbar .lod { background: var(--kombu); }
+.ui-metric .mbar .com { background: var(--moss); }
+.ui-section-title {
+  font-size: 11px; font-weight: 600; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px;
+}
+.ui-hist {
+  display: flex; align-items: flex-end; gap: 2px; height: 40px;
+}
+.ui-hist span {
+  flex: 1; background: var(--moss); border-radius: 2px 2px 0 0;
+  min-width: 3px; opacity: .85;
+}
+.ui-info-row {
+  display: flex; justify-content: space-between;
+  font-size: 13px; padding: 5px 0;
+  border-bottom: 1px solid rgba(76,61,25,.1);
+}
+.ui-info-row .il { color: var(--muted); }
+.ui-info-row .iv { color: var(--cafe); font-weight: 600; }
+.ui-focus {
+  margin-top: auto;
+  width: 100%; padding: 12px;
+  background: rgba(136,157,99,.2);
+  border: 1.5px solid var(--moss);
+  border-radius: 9px;
+  color: var(--kombu); font-weight: 600; font-size: 13.5px;
+  transition: .15s;
+}
+.ui-focus:hover { background: rgba(136,157,99,.35); }
+
+.dep-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 11px 14px; border: 1.5px solid var(--border);
+  border-radius: 8px; background: var(--cream); margin-bottom: 7px; font-size: 14px;
+}
+.dep-row .src { color: var(--cafe); font-weight: 600; }
+
+/* RECOVERY */
+.plan {
+  border: 1.5px solid var(--border); border-radius: 12px;
+  padding: 17px; background: var(--cream); margin-bottom: 12px;
+  transition: .2s; cursor: pointer;
+}
+.plan:hover { border-color: var(--moss); box-shadow: 0 4px 14px rgba(76,61,25,.1); }
+.plan.selected { border-color: var(--kombu); background: #EDE5D4; box-shadow: 0 0 0 2px rgba(136,157,99,.25); }
+.plan-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 9px; }
+.plan-name { font-weight: 600; font-size: 17px; color: var(--cafe); }
+.plan-st {
+  font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 5px;
+}
+.plan-st.active { background: rgba(136,157,99,.25); color: var(--kombu); }
+.plan-st.ready { background: rgba(136,157,99,.15); color: var(--moss); }
+.plan-st.standby { background: rgba(184,149,74,.2); color: var(--yellow); }
+.plan-desc { font-size: 13.5px; color: var(--muted); line-height: 1.65; margin-bottom: 11px; }
+.plan-meta { display: flex; gap: 18px; font-size: 12.5px; color: var(--muted); flex-wrap: wrap; }
+.plan-meta strong { color: var(--cafe); }
+.plan-actions { margin-top: 13px; display: flex; gap: 9px; }
+.plan-btn {
+  padding: 9px 16px; border-radius: 7px; font-size: 13px; font-weight: 500;
+  border: 1.5px solid var(--border); background: var(--cream); color: var(--cafe);
+  transition: .15s;
+}
+.plan-btn:hover { border-color: var(--moss); }
+.plan-btn.primary { background: rgba(136,157,99,.25); border-color: var(--moss); color: var(--kombu); }
+
+/* MISSIONS */
+.mission {
+  border: 1.5px solid var(--border); border-radius: 12px;
+  padding: 17px; background: var(--cream); transition: .2s;
+}
+.mission:hover { border-color: var(--moss); transform: translateY(-2px); box-shadow: 0 6px 16px rgba(76,61,25,.1); }
+.mission-name { font-weight: 600; font-size: 17px; margin-bottom: 7px; color: var(--cafe); }
+.mission-prio {
+  display: inline-block; font-size: 11px; font-weight: 700;
+  padding: 3px 9px; border-radius: 5px; margin-bottom: 11px;
+}
+.mission-prio.critical { background: rgba(139,58,42,.12); color: var(--red); }
+.mission-prio.high { background: rgba(184,149,74,.22); color: var(--yellow); }
+.mission-prio.medium { background: rgba(136,157,99,.2); color: var(--kombu); }
+.mission-info { font-size: 13.5px; color: var(--muted); line-height: 1.75; }
+.mission-info strong { color: var(--cafe); }
+.mission-prog { margin-top: 12px; }
+.mission-prog .bar { height: 6px; }
+.mission-prog .bar-row { margin-top: 6px; font-size: 12px; }
+
+/* SIMULATION */
+.sim-log {
+  max-height: 320px; overflow-y: auto;
+  background: var(--cream); border-radius: 10px; padding: 14px;
+  border: 1.5px solid var(--border);
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 13px;
+}
+.sim-log .ln { margin-bottom: 6px; color: var(--muted); }
+.sim-log .ts { color: var(--kombu); }
+.sim-log .ok { color: var(--moss); }
+.sim-log .wn { color: var(--yellow); }
+.sim-log .er { color: var(--red); }
+.sim-btns { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 14px; }
+.sim-btn {
+  padding: 10px 16px; border-radius: 8px; font-size: 13px; font-weight: 500;
+  border: 1.5px solid var(--border); background: var(--cream); color: var(--cafe);
+  transition: .15s;
+}
+.sim-btn:hover { border-color: var(--moss); }
+.sim-btn.danger:hover { border-color: var(--red); color: var(--red); }
+.sim-btn.pri {
+  background: rgba(136,157,99,.25); border-color: var(--moss); color: var(--kombu);
+}
+.twin-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.twin-item .lbl { font-size: 12px; color: var(--muted); }
+.twin-item .val { font-weight: 600; font-size: 16px; margin-top: 4px; color: var(--cafe); }
+
+/* DETAIL PANEL */
+.detail-panel {
+  display: none;
+  margin-top: 16px;
+  border: 1.5px solid var(--moss);
+  background: #EDE5D4;
+  border-radius: 11px; padding: 16px;
+}
+.detail-panel.show { display: block; }
+.detail-panel h3 { font-size: 16px; margin-bottom: 10px; color: var(--cafe); }
+.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 14px; }
+.detail-grid .lbl { color: var(--muted); }
+.detail-grid .val { font-weight: 600; color: var(--cafe); }
+
+@media (max-width: 1100px) {
+  .grid-5 { grid-template-columns: repeat(3, 1fr); }
+  .grid-2, .grid-2b, .twin-layout { grid-template-columns: 1fr; }
+  .grid-3 { grid-template-columns: 1fr 1fr; }
+  .robots { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 800px) {
+  .app { grid-template-columns: 1fr; }
+  .sidebar { display: none; }
+  main { padding: 16px; }
+  .grid-5, .grid-3 { grid-template-columns: 1fr 1fr; }
+  .robots { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-icon">F</div>
+      <div class="logo-text">Fleet<span>Guard</span></div>
+    </div>
+    <nav class="nav">
+      <div class="nav-item active" data-view="command"><span class="icon">◉</span> Command Center</div>
+      <div class="nav-item" data-view="health"><span class="icon">▣</span> Fleet Health</div>
+      <div class="nav-item" data-view="graph"><span class="icon">⌁</span> Failure Graph</div>
+      <div class="nav-item" data-view="recovery"><span class="icon">↻</span> Recovery Plans</div>
+      <div class="nav-item" data-view="missions"><span class="icon">◆</span> Missions</div>
+      <div class="nav-item" data-view="simulation"><span class="icon">◌</span> Simulation</div>
+    </nav>
+    <div class="sidebar-footer">
+      <div style="font-weight:700;margin-bottom:5px"><span class="dot"></span>Simulation Online</div>
+      <div style="color:rgba(255,245,235,.6);font-size:12px">Digital twin synchronized</div>
+    </div>
+  </aside>
+
+  <main>
+    <!-- VIEW 1: COMMAND CENTER -->
+    <div id="view-command" class="view active">
+      <div class="page-header">
+        <div>
+          <h1>Fleet Command Center</h1>
+          <div class="sub">Autonomous fleet recovery under cascading failures</div>
+        </div>
+        <div class="header-actions">
+          <div class="badge-live"><span class="dot"></span> LIVE SIMULATION</div>
+          <button class="btn-emergency" onclick="emergencyRecovery()">⚡ Emergency Recovery</button>
+        </div>
+      </div>
+      <div id="alert" class="alert">
+        <div><strong>CASCADE DETECTED</strong><br><span id="alertText">Robot failure propagating through shared resources.</span></div>
+        <div style="font-size:22px">⚠</div>
+      </div>
+      <section class="grid grid-5" style="margin-bottom:16px">
+        <div class="card">
+          <div class="kpi-label">Mission Completion</div>
+          <div class="kpi-value" id="kpi-completion">98.7%</div>
+          <div class="kpi-trend">▲ 2.4% after rebalancing</div>
+        </div>
+        <div class="card">
+          <div class="kpi-label">Fleet Availability</div>
+          <div class="kpi-value" id="kpi-availability">100%</div>
+          <div class="kpi-trend" id="kpi-avail-trend">8 / 8 operational</div>
+        </div>
+        <div class="card">
+          <div class="kpi-label">Predicted Failures</div>
+          <div class="kpi-value" id="kpi-predicted">1</div>
+          <div class="kpi-trend" style="color:var(--yellow)">AI risk model active</div>
+        </div>
+        <div class="card">
+          <div class="kpi-label">Tasks Migrated</div>
+          <div class="kpi-value" id="kpi-migrated">0</div>
+          <div class="kpi-trend">Minimal reassignment</div>
+        </div>
+        <div class="card">
+          <div class="kpi-label">Resource Efficiency</div>
+          <div class="kpi-value" id="kpi-efficiency">94%</div>
+          <div class="kpi-trend">Battery-aware scheduling</div>
+        </div>
+      </section>
+      <section class="grid grid-2" style="margin-bottom:16px">
+        <div class="card">
+          <div class="card-head"><div class="card-title">Fleet Health</div><div class="card-tag">Telemetry • live</div></div>
+          <div class="robots" id="robots"></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><div class="card-title">Failure Propagation Graph</div><div class="card-tag">2D dependency model</div></div>
+          <div class="graph-box" id="miniGraph">
+            <div class="node ok" id="mn1" style="left:24px;top:105px">R-01</div>
+            <div class="node ok" id="mn2" style="left:140px;top:32px">TASK-A</div>
+            <div class="node ok" id="mn3" style="left:140px;top:185px">R-02</div>
+            <div class="node ok" id="mn4" style="left:260px;top:105px">RESOURCE</div>
+            <div class="node ok" id="mn5" style="left:380px;top:32px">TASK-B</div>
+            <div class="node ok" id="mn6" style="left:380px;top:185px">R-03</div>
+          </div>
+          <div class="legend">
+            <span><i style="background:var(--green)"></i>Healthy</span>
+            <span><i style="background:var(--yellow)"></i>Affected</span>
+            <span><i style="background:var(--red)"></i>Failed</span>
+          </div>
+        </div>
+      </section>
+      <section class="grid grid-2b" style="margin-bottom:16px">
+        <div class="card">
+          <div class="card-head"><div class="card-title">Recovery Timeline</div><div class="card-tag">Latest events</div></div>
+          <div class="timeline" id="timeline">
+            <div class="event"><div class="event-time">09:42:01</div><div class="event-body"><strong>Fleet monitoring initialized</strong><span>All robots within normal health envelope.</span></div></div>
+            <div class="event"><div class="event-time">09:42:04</div><div class="event-body"><strong>Predictive model updated</strong><span>R-06 elevated to 18% failure probability.</span></div></div>
+            <div class="event"><div class="event-time">09:42:09</div><div class="event-body"><strong>Mission scheduler optimized</strong><span>Battery-aware workload distribution completed.</span></div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><div class="card-title">Mission Queue</div><div class="card-tag">Priority aware</div></div>
+          <div class="task-list" id="taskList"></div>
+        </div>
+      </section>
+      <section class="grid grid-2">
+        <div class="card">
+          <div class="card-head"><div class="card-title">Failure Injection Lab</div><div class="card-tag">Test any sequence</div></div>
+          <div class="fail-btns" id="failBtns"></div>
+          <button class="btn-reset" onclick="resetAll()">↻ Reset Simulation</button>
+        </div>
+        <div class="card">
+          <div class="card-head"><div class="card-title">Recovery Engine</div><div class="card-tag">AI decision layer</div></div>
+          <div style="font-size:14px;color:var(--muted);line-height:2">
+            <div>✓ Mission criticality analysis</div>
+            <div>✓ Dependency-aware failure propagation</div>
+            <div>✓ Battery & capacity constraints</div>
+            <div>✓ Minimum-task-migration strategy</div>
+            <div>✓ Dynamic fleet rebalancing</div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- VIEW 2: FLEET HEALTH -->
+    <div id="view-health" class="view">
+      <div class="page-header">
+        <div>
+          <h1>Fleet Health</h1>
+          <div class="sub">Detailed telemetry, risk scores and battery status for every robot</div>
+        </div>
+        <div class="header-actions"><div class="badge-live"><span class="dot"></span> LIVE TELEMETRY</div></div>
+      </div>
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-head"><div class="card-title">Robot Status Table</div><div class="card-tag">Click a row for details</div></div>
+        <table>
+          <thead>
+            <tr><th>Robot</th><th>Status</th><th>Health</th><th>Battery</th><th>Load</th><th>Temp</th><th>Uptime</th><th>Risk</th></tr>
+          </thead>
+          <tbody id="healthBody"></tbody>
+        </table>
+        <div class="detail-panel" id="robotDetail">
+          <h3 id="detailTitle">Robot Details</h3>
+          <div class="detail-grid" id="detailGrid"></div>
+        </div>
+      </div>
+      <section class="grid grid-3">
+        <div class="card">
+          <div class="card-head"><div class="card-title">Health Distribution</div></div>
+          <div id="healthDist" style="font-size:15px;line-height:2.2;color:var(--muted)"></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><div class="card-title">Battery Alerts</div><div class="card-tag">&lt; 60%</div></div>
+          <div id="battAlerts" style="font-size:14px;color:var(--muted)"></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><div class="card-title">Risk Ranking</div></div>
+          <div id="riskRank" style="font-size:14px;color:var(--muted)"></div>
+        </div>
+      </section>
+    </div>
+
+    <!-- VIEW 3: FAILURE GRAPH — DIGITAL TWIN (screenshot inspired) -->
+    <div id="view-graph" class="view">
+      <div class="page-header">
+        <div>
+          <h1>Failure Propagation Graph</h1>
+          <div class="sub">2D digital twin with live positioning — click any unit to inspect</div>
+        </div>
+        <div class="header-actions">
+          <div class="badge-live"><span class="dot"></span> LIVE POSITIONING</div>
+        </div>
+      </div>
+
+      <div class="twin-layout" style="margin-bottom:16px">
+        <!-- CANVAS -->
+        <div class="twin-canvas" id="twinCanvas">
+          <div class="twin-toolbar">
+            <div class="twin-toolbar-left">
+              <span>⬡ DIGITAL TWIN / LIVE POSITIONING</span>
+              <span class="rt">REALTIME</span>
+            </div>
+            <div class="twin-toolbar-right">
+              <label class="toggle"><input type="checkbox" id="togHeat" checked> HEATMAP</label>
+              <label class="toggle"><input type="checkbox" id="togMig" checked onchange="toggleMigPaths()"> MIGRATION PATHS</label>
+            </div>
+          </div>
+          <div class="twin-sector">
+            SECTOR 04 / NORTH RIDGE<br>
+            GRID 24.8 – 51.2
+          </div>
+          <!-- SVG for migration paths -->
+          <svg id="migSvg" style="position:absolute;inset:0;width:100%;height:100%;z-index:5;pointer-events:none"></svg>
+          <!-- Units rendered by JS -->
+          <div id="unitNodes"></div>
+          <div class="twin-legend-bar">
+            <span><i style="background:var(--cyan)"></i> NOMINAL</span>
+            <span><i style="background:var(--yellow)"></i> AT RISK</span>
+            <span><i style="background:var(--red)"></i> CRITICAL</span>
+            <span><i style="background:var(--purple);border-radius:3px"></i> TASK NODE</span>
+          </div>
+          <div class="twin-zoom">
+            <button onclick="zoomTwin(1)">+</button>
+            <button onclick="zoomTwin(-1)">−</button>
+          </div>
+        </div>
+        <!-- UNIT INSPECTOR -->
+        <div class="unit-inspector" id="unitInspector">
+          <div class="ui-head">
+            <div>
+              <h3>⬡ UNIT INSPECTOR</h3>
+              <div class="ui-id" id="uiId">R-07</div>
+              <span class="ui-status healthy" id="uiStatus">HEALTHY</span>
+            </div>
+          </div>
+          <div class="ui-fail-box" id="uiFailBox">
+            <strong>⚠ FAILURE REASON</strong>
+            <span id="uiFailReason">No active anomaly. Unit is within expected operating envelope.</span>
+          </div>
+          <div class="ui-metrics">
+            <div class="ui-metric">
+              <div class="mlbl">🔋 BATTERY</div>
+              <div class="mval" id="uiBat">87.2%</div>
+              <div class="mbar"><div class="bat" id="uiBatBar" style="width:87%"></div></div>
+            </div>
+            <div class="ui-metric">
+              <div class="mlbl">🌡 THERMAL</div>
+              <div class="mval" id="uiThm">34.9°C</div>
+              <div class="mbar"><div class="thm" id="uiThmBar" style="width:45%"></div></div>
+            </div>
+            <div class="ui-metric">
+              <div class="mlbl">📊 LOAD</div>
+              <div class="mval" id="uiLod">51%</div>
+              <div class="mbar"><div class="lod" id="uiLodBar" style="width:51%"></div></div>
+            </div>
+            <div class="ui-metric">
+              <div class="mlbl">📡 COMMS</div>
+              <div class="mval" id="uiCom">91.9%</div>
+              <div class="mbar"><div class="com" id="uiComBar" style="width:92%"></div></div>
+            </div>
+          </div>
+          <div>
+            <div class="ui-section-title">Battery History · Last 30 min</div>
+            <div class="ui-hist" id="uiHist"></div>
+          </div>
+          <div>
+            <div class="ui-info-row"><span class="il">ASSIGNED TASK</span><span class="iv" id="uiTask">Access mapping</span></div>
+            <div class="ui-info-row"><span class="il">CAPABILITY SET</span><span class="iv" id="uiCap">mapping · transport</span></div>
+            <div class="ui-info-row"><span class="il">COORDINATES</span><span class="iv" id="uiCoord">17.0 / 45.7</span></div>
+          </div>
+          <button class="ui-focus" onclick="focusSelected()">◎ FOCUS UNIT</button>
+        </div>
+      </div>
+
+      <section class="grid grid-2">
+        <div class="card">
+          <div class="card-head"><div class="card-title">Dependency Edges</div></div>
+          <div>
+            <div class="dep-row"><span class="src">R-01</span><span>→ TASK-A, RESOURCE</span></div>
+            <div class="dep-row"><span class="src">R-02</span><span>→ RESOURCE</span></div>
+            <div class="dep-row"><span class="src">RESOURCE</span><span>→ TASK-A, TASK-B, R-03</span></div>
+            <div class="dep-row"><span class="src">TASK-A</span><span>→ TASK-B</span></div>
+            <div class="dep-row"><span class="src">R-03</span><span>→ TASK-B</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><div class="card-title">Cascade Impact Analysis</div></div>
+          <div id="cascadeBox" style="font-size:14px;color:var(--muted);line-height:1.9">
+            No active failures. Graph is in nominal state.<br>All units healthy. Migration paths idle.
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- VIEW 4: RECOVERY PLANS -->
+    <div id="view-recovery" class="view">
+      <div class="page-header">
+        <div>
+          <h1>Recovery Plans</h1>
+          <div class="sub">AI-generated strategies — select a plan and activate it</div>
+        </div>
+      </div>
+      <div id="plansContainer"></div>
+      <div class="card" style="margin-top:16px">
+        <div class="card-head"><div class="card-title">Plan Comparison</div></div>
+        <table>
+          <thead>
+            <tr><th>Plan</th><th>Recovery Time</th><th>Tasks Moved</th><th>Success Rate</th><th>Disruption</th><th>Best For</th></tr>
+          </thead>
+          <tbody>
+            <tr><td style="font-weight:700">Minimal Migration</td><td>~1.8 s</td><td>1–3</td><td style="color:var(--green)">97.2%</td><td>Low</td><td>Single robot failure</td></tr>
+            <tr><td style="font-weight:700">Full Fleet Rebalance</td><td>~4.2 s</td><td>up to 6</td><td style="color:var(--green)">99.1%</td><td>Medium</td><td>Multiple failures</td></tr>
+            <tr><td style="font-weight:700">Critical-Path Isolation</td><td>~2.5 s</td><td>2–4</td><td style="color:var(--yellow)">94.8%</td><td>Medium</td><td>Cascade risk high</td></tr>
+            <tr><td style="font-weight:700">Emergency Shutdown</td><td>manual</td><td>0</td><td style="color:var(--muted)">N/A</td><td>High</td><td>Last resort</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- VIEW 5: MISSIONS -->
+    <div id="view-missions" class="view">
+      <div class="page-header">
+        <div>
+          <h1>Missions</h1>
+          <div class="sub">Active mission queue with real-time assignment and progress</div>
+        </div>
+        <div class="header-actions"><div class="badge-live"><span class="dot"></span> <span id="missionCount">6</span> ACTIVE</div></div>
+      </div>
+      <div class="grid grid-3" id="missionGrid" style="margin-bottom:16px"></div>
+      <div class="card">
+        <div class="card-head"><div class="card-title">Mission Assignment History</div><div class="card-tag">Last reassignments</div></div>
+        <table>
+          <thead><tr><th>Time</th><th>Mission</th><th>From</th><th>To</th><th>Reason</th></tr></thead>
+          <tbody id="missionHistory">
+            <tr><td>09:42:09</td><td>Warehouse Pick Route</td><td>—</td><td>R-01</td><td>Initial assignment</td></tr>
+            <tr><td>09:42:09</td><td>Cold Storage Delivery</td><td>—</td><td>R-02</td><td>Initial assignment</td></tr>
+            <tr><td>09:42:09</td><td>Inventory Scan</td><td>—</td><td>R-03</td><td>Initial assignment</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- VIEW 6: SIMULATION -->
+    <div id="view-simulation" class="view">
+      <div class="page-header">
+        <div>
+          <h1>Simulation Lab</h1>
+          <div class="sub">Inject failures, run recovery scenarios, inspect the digital twin</div>
+        </div>
+      </div>
+      <section class="grid grid-2" style="margin-bottom:16px">
+        <div class="card">
+          <div class="card-head"><div class="card-title">Failure Injection</div><div class="card-tag">Single or multi-robot</div></div>
+          <div class="fail-btns" id="simFailBtns"></div>
+          <div class="sim-btns">
+            <button class="sim-btn pri" onclick="emergencyRecovery()">⚡ Emergency Recovery</button>
+            <button class="sim-btn" onclick="resetAll()">↻ Reset All</button>
+            <button class="sim-btn danger" onclick="runCascade()">Cascade R-06 → R-02</button>
+            <button class="sim-btn danger" onclick="failAllLow()">Fail All At-Risk</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><div class="card-title">Simulation Log</div><div class="card-tag">Event stream</div></div>
+          <div class="sim-log" id="simLog">
+            <div class="ln"><span class="ts">[09:42:01]</span> <span class="ok">INIT</span> Fleet monitoring started</div>
+            <div class="ln"><span class="ts">[09:42:04]</span> <span class="wn">PREDICT</span> R-06 failure probability → 18%</div>
+            <div class="ln"><span class="ts">[09:42:09]</span> <span class="ok">SCHED</span> Battery-aware optimization complete</div>
+          </div>
+        </div>
+      </section>
+      <div class="card">
+        <div class="card-head"><div class="card-title">Digital Twin Status</div><div class="card-tag">Synchronized</div></div>
+        <div class="twin-grid">
+          <div class="twin-item"><div class="lbl">Sync Latency</div><div class="val">12 ms</div></div>
+          <div class="twin-item"><div class="lbl">Model Version</div><div class="val">v2.4.1</div></div>
+          <div class="twin-item"><div class="lbl">Active Scenarios</div><div class="val" id="twin-scenarios">0</div></div>
+          <div class="twin-item"><div class="lbl">Last Tick</div><div class="val" id="twin-tick">just now</div></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+const robots = [
+  { id: 'R-01', health: 96, battery: 87, load: 64, temp: 38, uptime: '14h 22m', role: 'Warehouse picker', task: 'Warehouse Pick Route', cap: 'pick · transport' },
+  { id: 'R-02', health: 92, battery: 74, load: 71, temp: 41, uptime: '11h 05m', role: 'Cold storage unit', task: 'Cold Storage Delivery', cap: 'cold · transport' },
+  { id: 'R-03', health: 89, battery: 81, load: 52, temp: 36, uptime: '9h 48m', role: 'Inventory scanner', task: 'Inventory Scan', cap: 'scan · map' },
+  { id: 'R-04', health: 97, battery: 91, load: 42, temp: 34, uptime: '16h 10m', role: 'Dock transfer', task: '—', cap: 'dock · haul' },
+  { id: 'R-05', health: 84, battery: 68, load: 76, temp: 44, uptime: '7h 33m', role: 'Packing support', task: 'Packing Line Support', cap: 'pack · sort' },
+  { id: 'R-06', health: 81, battery: 57, load: 83, temp: 47, uptime: '5h 17m', role: 'Quality inspector', task: '—', cap: 'inspect · sense' },
+  { id: 'R-07', health: 94, battery: 79, load: 61, temp: 37, uptime: '12h 41m', role: 'Dock transfer', task: 'Dock Transfer', cap: 'dock · haul' },
+  { id: 'R-08', health: 91, battery: 88, load: 49, temp: 35, uptime: '13h 56m', role: 'Quality inspector', task: 'Quality Inspection', cap: 'inspect · sense' }
+];
+const missions = [
+  { name: 'Warehouse Pick Route', robot: 'R-01', priority: 'CRITICAL', progress: 82, eta: '12 min' },
+  { name: 'Cold Storage Delivery', robot: 'R-02', priority: 'HIGH', progress: 67, eta: '18 min' },
+  { name: 'Inventory Scan', robot: 'R-03', priority: 'MEDIUM', progress: 54, eta: '25 min' },
+  { name: 'Packing Line Support', robot: 'R-05', priority: 'HIGH', progress: 73, eta: '15 min' },
+  { name: 'Dock Transfer', robot: 'R-07', priority: 'CRITICAL', progress: 39, eta: '30 min' },
+  { name: 'Quality Inspection', robot: 'R-08', priority: 'MEDIUM', progress: 61, eta: '22 min' }
+];
+const plans = [
+  { name: 'Minimal Migration Strategy', status: 'active', desc: 'Reassigns only the tasks of failed robots to the nearest healthy units with sufficient battery and capacity. Minimizes disruption while preserving mission criticality order.', time: '~1.8 s', tasks: '1–3', rate: '97.2%', best: 'Single robot failure' },
+  { name: 'Full Fleet Rebalance', status: 'ready', desc: 'Globally optimizes workload across all operational robots. Useful when multiple failures occur simultaneously or when battery levels are highly uneven.', time: '~4.2 s', tasks: 'up to 6', rate: '99.1%', best: 'Multiple failures' },
+  { name: 'Critical-Path Isolation', status: 'standby', desc: 'Isolates failed nodes from the dependency graph and routes only CRITICAL missions through remaining healthy paths. Non-critical work is paused until recovery completes.', time: '~2.5 s', tasks: '2–4', rate: '94.8%', best: 'High cascade risk' },
+  { name: 'Emergency Shutdown Cascade', status: 'standby', desc: 'Last-resort plan. Gracefully stops all dependent tasks, parks robots, and waits for human override. Prevents further cascade damage when recovery confidence is low.', time: 'manual', tasks: '0', rate: 'N/A', best: 'Last resort' }
+];
+
+/* Digital twin unit positions (scattered like screenshot) */
+const twinUnits = [
+  { id: 'R-01', x: 80, y: 120, type: 'robot' },
+  { id: 'R-02', x: 200, y: 90, type: 'robot' },
+  { id: 'R-03', x: 340, y: 140, type: 'robot' },
+  { id: 'R-04', x: 480, y: 80, type: 'robot' },
+  { id: 'R-05', x: 140, y: 220, type: 'robot' },
+  { id: 'R-06', x: 280, y: 260, type: 'robot' },
+  { id: 'R-07', x: 420, y: 200, type: 'robot' },
+  { id: 'R-08', x: 560, y: 160, type: 'robot' },
+  { id: 'R-09', x: 100, y: 340, type: 'robot' },
+  { id: 'R-10', x: 250, y: 380, type: 'robot' },
+  { id: 'R-11', x: 400, y: 360, type: 'robot' },
+  { id: 'R-12', x: 540, y: 300, type: 'robot' },
+  { id: 'R-13', x: 620, y: 240, type: 'robot' },
+  { id: 'R-14', x: 180, y: 300, type: 'robot' },
+  { id: 'TASK-A', x: 320, y: 60, type: 'task' },
+  { id: 'TASK-B', x: 500, y: 400, type: 'task' }
+];
+let liveTwin = JSON.parse(JSON.stringify(twinUnits));
+let selectedUnit = 6; /* R-07 */
+let migVisible = true;
+let twinScale = 1;
+
+let failed = new Set();
+let migrated = 0;
+let selectedPlan = 0;
+
+/* NAV */
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', () => {
+    const view = item.dataset.view;
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    item.classList.add('active');
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-' + view).classList.add('active');
+    if (view === 'health') renderHealth();
+    if (view === 'graph') { renderTwin(); updateInspector(selectedUnit); }
+    if (view === 'recovery') renderPlans();
+    if (view === 'missions') renderMissions();
+    if (view === 'command') { renderRobots(); renderTasks(); drawMiniEdges(); }
+    if (view === 'simulation') renderSimFailBtns();
+  });
+});
+
+function renderRobots() {
+  const el = document.getElementById('robots');
+  if (!el) return;
+  el.innerHTML = robots.map((r, i) => {
+    const isFailed = failed.has(i);
+    const isRisk = !isFailed && r.health < 87;
+    const st = isFailed ? 'failed' : isRisk ? 'risk' : 'active';
+    const stLabel = isFailed ? 'FAILED' : isRisk ? 'RISK' : 'ACTIVE';
+    const cls = isFailed ? 'failed' : isRisk ? 'risk' : '';
+    return `<div class="robot ${cls}">
+      <div class="robot-top"><div class="robot-name">${r.id}</div><div class="st ${st}">${stLabel}</div></div>
+      <div class="robot-emoji">🤖</div>
+      <div class="bar-row"><span>Health</span><span>${isFailed ? 0 : r.health}%</span></div>
+      <div class="bar"><div class="bar-fill ${r.health < 85 ? 'low' : ''}" style="width:${isFailed ? 0 : r.health}%"></div></div>
+      <div class="bar-row"><span>Battery</span><span>${isFailed ? 0 : r.battery}%</span></div>
+      <div class="bar"><div class="bar-fill ${r.battery < 60 ? 'low' : ''}" style="width:${isFailed ? 0 : r.battery}%"></div></div>
+      <div class="bar-row"><span>Load</span><span>${isFailed ? 0 : r.load}%</span></div>
+      <div class="bar"><div class="bar-fill" style="width:${isFailed ? 0 : r.load}%"></div></div>
+    </div>`;
+  }).join('');
+}
+
+function renderTasks() {
+  const el = document.getElementById('taskList');
+  if (!el) return;
+  el.innerHTML = missions.map(m => {
+    const idx = robots.findIndex(r => r.id === m.robot);
+    const isFailed = failed.has(idx);
+    let assigned = m.robot;
+    let st = 'RUNNING';
+    let stCls = '';
+    if (isFailed) {
+      st = 'MIGRATING';
+      stCls = 'mig';
+      const avail = robots.findIndex((r, j) => !failed.has(j) && r.load < 80);
+      if (avail >= 0) assigned = robots[avail].id;
+    }
+    return `<div class="task">
+      <div><div class="task-name">${m.name}</div><div class="task-meta">${assigned} • ${m.priority}</div>
+      <div class="prog"><div style="width:${m.progress}%"></div></div></div>
+      <div class="task-st ${stCls}">${st}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderFailBtns() {
+  const html = robots.map((r, i) => `<button class="fail-btn" onclick="failRobot(${i})">⚠ Fail ${r.id}</button>`).join('');
+  const el1 = document.getElementById('failBtns');
+  if (el1) el1.innerHTML = html;
+}
+function renderSimFailBtns() {
+  const html = robots.map((r, i) => `<button class="fail-btn" onclick="failRobot(${i})">⚠ Fail ${r.id}</button>`).join('');
+  const el = document.getElementById('simFailBtns');
+  if (el) el.innerHTML = html;
+}
+
+function renderHealth() {
+  const body = document.getElementById('healthBody');
+  if (!body) return;
+  body.innerHTML = robots.map((r, i) => {
+    const isFailed = failed.has(i);
+    const isRisk = !isFailed && r.health < 87;
+    const st = isFailed ? 'FAILED' : isRisk ? 'RISK' : 'ACTIVE';
+    const pill = isFailed ? 'bad' : isRisk ? 'warn' : 'ok';
+    const risk = isFailed ? 100 : Math.round((100 - r.health) * 0.7 + (100 - r.battery) * 0.3);
+    return `<tr style="cursor:pointer" onclick="showRobotDetail(${i})">
+      <td style="font-weight:700">${r.id}</td>
+      <td><span class="pill ${pill}">${st}</span></td>
+      <td>${isFailed ? 0 : r.health}%</td>
+      <td>${isFailed ? 0 : r.battery}%</td>
+      <td>${isFailed ? 0 : r.load}%</td>
+      <td>${isFailed ? '—' : r.temp + '°C'}</td>
+      <td>${isFailed ? '—' : r.uptime}</td>
+      <td style="color:${risk > 40 ? 'var(--red)' : risk > 20 ? 'var(--yellow)' : 'var(--green)'}">${risk}%</td>
+    </tr>`;
+  }).join('');
+  const healthy = robots.filter((r, i) => !failed.has(i) && r.health >= 87).length;
+  const riskC = robots.filter((r, i) => !failed.has(i) && r.health < 87).length;
+  const dead = failed.size;
+  document.getElementById('healthDist').innerHTML = `
+    <div>🟢 Healthy: <strong style="color:var(--green)">${healthy}</strong></div>
+    <div>🟡 At Risk: <strong style="color:var(--yellow)">${riskC}</strong></div>
+    <div>🔴 Failed: <strong style="color:var(--red)">${dead}</strong></div>
+    <div style="margin-top:6px">Availability: <strong>${Math.round((8 - dead) / 8 * 100)}%</strong></div>`;
+  const low = robots.filter((r, i) => !failed.has(i) && r.battery < 60);
+  document.getElementById('battAlerts').innerHTML = low.length
+    ? low.map(r => `<div style="margin-bottom:5px">⚠ <strong>${r.id}</strong> — ${r.battery}% battery</div>`).join('')
+    : '<div style="color:var(--green)">All operational robots above 60% battery.</div>';
+  const ranked = robots.map((r, i) => ({
+    id: r.id,
+    risk: failed.has(i) ? 100 : Math.round((100 - r.health) * 0.7 + (100 - r.battery) * 0.3)
+  })).sort((a, b) => b.risk - a.risk);
+  document.getElementById('riskRank').innerHTML = ranked.slice(0, 5).map((r, i) =>
+    `<div style="margin-bottom:5px">${i + 1}. <strong>${r.id}</strong> — risk ${r.risk}%</div>`
+  ).join('');
+}
+
+function showRobotDetail(i) {
+  const r = robots[i];
+  const isFailed = failed.has(i);
+  document.getElementById('detailTitle').textContent = r.id + ' — ' + r.role;
+  document.getElementById('detailGrid').innerHTML = `
+    <div><span class="lbl">Status</span><br><span class="val">${isFailed ? 'FAILED' : r.health < 87 ? 'AT RISK' : 'ACTIVE'}</span></div>
+    <div><span class="lbl">Health</span><br><span class="val">${isFailed ? 0 : r.health}%</span></div>
+    <div><span class="lbl">Battery</span><br><span class="val">${isFailed ? 0 : r.battery}%</span></div>
+    <div><span class="lbl">Mission Load</span><br><span class="val">${isFailed ? 0 : r.load}%</span></div>
+    <div><span class="lbl">Temperature</span><br><span class="val">${isFailed ? '—' : r.temp + '°C'}</span></div>
+    <div><span class="lbl">Uptime</span><br><span class="val">${isFailed ? '—' : r.uptime}</span></div>
+    <div><span class="lbl">Role</span><br><span class="val">${r.role}</span></div>
+    <div><span class="lbl">Assigned Mission</span><br><span class="val">${missions.find(m => m.robot === r.id)?.name || 'None'}</span></div>`;
+  document.getElementById('robotDetail').classList.add('show');
+}
+
+function renderMissions() {
+  const grid = document.getElementById('missionGrid');
+  if (!grid) return;
+  grid.innerHTML = missions.map(m => {
+    const idx = robots.findIndex(r => r.id === m.robot);
+    const isFailed = failed.has(idx);
+    let assigned = m.robot;
+    if (isFailed) {
+      const avail = robots.findIndex((r, j) => !failed.has(j) && r.load < 80);
+      if (avail >= 0) assigned = robots[avail].id;
+    }
+    const prio = m.priority.toLowerCase();
+    return `<div class="mission">
+      <div class="mission-name">${m.name}</div>
+      <span class="mission-prio ${prio}">${m.priority}</span>
+      <div class="mission-info">
+        Assigned: <strong>${assigned}</strong><br>
+        Status: <strong style="color:${isFailed ? 'var(--yellow)' : 'var(--green)'}">${isFailed ? 'MIGRATING' : 'RUNNING'}</strong><br>
+        ETA: <strong>${m.eta}</strong>
+      </div>
+      <div class="mission-prog">
+        <div class="bar"><div class="bar-fill" style="width:${m.progress}%"></div></div>
+        <div class="bar-row"><span>Progress</span><span>${m.progress}%</span></div>
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('missionCount').textContent = missions.length;
+}
+
+function renderPlans() {
+  const el = document.getElementById('plansContainer');
+  if (!el) return;
+  el.innerHTML = plans.map((p, i) => `
+    <div class="plan ${i === selectedPlan ? 'selected' : ''}" onclick="selectPlan(${i})">
+      <div class="plan-top">
+        <div class="plan-name">${p.name}</div>
+        <div class="plan-st ${p.status}">${p.status.toUpperCase()}</div>
+      </div>
+      <div class="plan-desc">${p.desc}</div>
+      <div class="plan-meta">
+        <span>Est. recovery: <strong>${p.time}</strong></span>
+        <span>Tasks moved: <strong>${i === 0 ? (migrated || p.tasks) : p.tasks}</strong></span>
+        <span>Success rate: <strong>${p.rate}</strong></span>
+        <span>Best for: <strong>${p.best}</strong></span>
+      </div>
+      <div class="plan-actions">
+        <button class="plan-btn primary" onclick="event.stopPropagation();activatePlan(${i})">
+          ${i === selectedPlan && p.status === 'active' ? '✓ Active' : 'Activate Plan'}
+        </button>
+        <button class="plan-btn" onclick="event.stopPropagation();showPlanDetail(${i})">View Details</button>
+      </div>
+    </div>`).join('');
+}
+function selectPlan(i) { selectedPlan = i; renderPlans(); }
+function activatePlan(i) {
+  selectedPlan = i;
+  plans.forEach((p, j) => p.status = j === i ? 'active' : (j === 0 ? 'ready' : 'standby'));
+  addEvent('Recovery plan activated', plans[i].name + ' is now the active strategy.');
+  renderPlans();
+}
+function showPlanDetail(i) {
+  addEvent('Plan details viewed', plans[i].name + ': recovery ' + plans[i].time);
+}
+
+/* ═══ DIGITAL TWIN ═══ */
+function getUnitStatus(id) {
+  const ri = robots.findIndex(r => r.id === id);
+  if (ri >= 0 && failed.has(ri)) return 'critical';
+  if (ri >= 0 && robots[ri].health < 87) return 'risk';
+  if (id.startsWith('TASK')) return 'task';
+  return 'ok';
+}
+
+function renderTwin() {
+  const container = document.getElementById('unitNodes');
+  if (!container) return;
+  container.innerHTML = liveTwin.map((u, i) => {
+    const st = getUnitStatus(u.id);
+    const sel = i === selectedUnit ? 'selected' : '';
+    const icon = u.type === 'task' ? '◆' : '📦';
+    return `<div class="unit-node ${st} ${sel}" id="tu${i}"
+      style="left:${u.x}px;top:${u.y}px"
+      onclick="selectTwinUnit(${i})"
+      title="${u.id}">
+      <span class="uicon">${icon}</span>
+    </div>`;
+  }).join('');
+  drawMigPaths();
+}
+
+function drawMigPaths() {
+  const svg = document.getElementById('migSvg');
+  if (!svg || !migVisible) { if (svg) svg.innerHTML = ''; return; }
+  /* curved dashed paths between some units */
+  const paths = [
+    [0, 4, 'cyan'], [1, 5, 'purple'], [2, 6, 'cyan'],
+    [3, 7, 'purple'], [4, 9, 'cyan'], [5, 10, 'purple'],
+    [6, 11, 'cyan'], [8, 13, 'purple']
+  ];
+  let html = '';
+  paths.forEach(([a, b, cls]) => {
+    const A = liveTwin[a], B = liveTwin[b];
+    if (!A || !B) return;
+    const x1 = A.x + 26, y1 = A.y + 26;
+    const x2 = B.x + 26, y2 = B.y + 26;
+    const mx = (x1 + x2) / 2 + (Math.random() * 40 - 20);
+    const my = (y1 + y2) / 2 + (Math.random() * 30 - 15);
+    html += `<path class="mig-path ${cls}" d="M${x1},${y1} Q${mx},${my} ${x2},${y2}" />`;
+  });
+  svg.innerHTML = html;
+}
+
+function toggleMigPaths() {
+  migVisible = document.getElementById('togMig').checked;
+  drawMigPaths();
+}
+
+function selectTwinUnit(i) {
+  selectedUnit = i;
+  renderTwin();
+  updateInspector(i);
+}
+
+function updateInspector(i) {
+  const u = liveTwin[i];
+  if (!u) return;
+  const ri = robots.findIndex(r => r.id === u.id);
+  const r = ri >= 0 ? robots[ri] : null;
+  const isFailed = ri >= 0 && failed.has(ri);
+  const isRisk = r && !isFailed && r.health < 87;
+
+  document.getElementById('uiId').textContent = u.id;
+  const stEl = document.getElementById('uiStatus');
+  if (isFailed) { stEl.textContent = 'CRITICAL'; stEl.className = 'ui-status failed'; }
+  else if (isRisk) { stEl.textContent = 'AT RISK'; stEl.className = 'ui-status risk'; }
+  else if (u.type === 'task') { stEl.textContent = 'TASK NODE'; stEl.className = 'ui-status healthy'; }
+  else { stEl.textContent = 'HEALTHY'; stEl.className = 'ui-status healthy'; }
+
+  document.getElementById('uiFailReason').textContent = isFailed
+    ? u.id + ' telemetry anomaly. Health dropped below operational threshold. Cascade analysis active.'
+    : 'No active anomaly. Unit is within expected operating envelope.';
+
+  const bat = r ? (isFailed ? 0 : r.battery) : 90;
+  const thm = r ? (isFailed ? 0 : r.temp) : 35;
+  const lod = r ? (isFailed ? 0 : r.load) : 40;
+  const com = isFailed ? 12 : 85 + Math.floor(Math.random() * 12);
+
+  document.getElementById('uiBat').textContent = bat.toFixed(1) + '%';
+  document.getElementById('uiBatBar').style.width = bat + '%';
+  document.getElementById('uiThm').textContent = thm.toFixed(1) + '°C';
+  document.getElementById('uiThmBar').style.width = Math.min(100, thm * 1.5) + '%';
+  document.getElementById('uiLod').textContent = lod + '%';
+  document.getElementById('uiLodBar').style.width = lod + '%';
+  document.getElementById('uiCom').textContent = com.toFixed(1) + '%';
+  document.getElementById('uiComBar').style.width = com + '%';
+
+  /* battery history bars */
+  let hist = '';
+  for (let h = 0; h < 28; h++) {
+    const ht = 30 + Math.random() * 70;
+    hist += `<span style="height:${ht}%"></span>`;
+  }
+  document.getElementById('uiHist').innerHTML = hist;
+
+  document.getElementById('uiTask').textContent = r ? r.task : (u.type === 'task' ? u.id : '—');
+  document.getElementById('uiCap').textContent = r ? r.cap : 'task node';
+  document.getElementById('uiCoord').textContent = (u.x / 10).toFixed(1) + ' / ' + (u.y / 10).toFixed(1);
+}
+
+function focusSelected() {
+  const u = liveTwin[selectedUnit];
+  if (!u) return;
+  /* brief highlight pulse */
+  const el = document.getElementById('tu' + selectedUnit);
+  if (el) {
+    el.style.transform = 'scale(1.3)';
+    setTimeout(() => { el.style.transform = ''; }, 400);
+  }
+}
+
+function zoomTwin(dir) {
+  twinScale = Math.max(0.7, Math.min(1.4, twinScale + dir * 0.1));
+  document.getElementById('unitNodes').style.transform = 'scale(' + twinScale + ')';
+  document.getElementById('unitNodes').style.transformOrigin = 'center center';
+}
+
+function drawMiniEdges() {
+  const graph = document.getElementById('miniGraph');
+  if (!graph) return;
+  graph.querySelectorAll('.edge').forEach(e => e.remove());
+  const links = [[1,2],[1,4],[3,4],[4,5],[4,6],[2,5]];
+  links.forEach(([a, b]) => {
+    const A = document.getElementById('mn' + a);
+    const B = document.getElementById('mn' + b);
+    if (!A || !B) return;
+    const ax = A.offsetLeft + A.offsetWidth / 2;
+    const ay = A.offsetTop + A.offsetHeight / 2;
+    const bx = B.offsetLeft + B.offsetWidth / 2;
+    const by = B.offsetTop + B.offsetHeight / 2;
+    const dx = bx - ax, dy = by - ay;
+    const len = Math.sqrt(dx * dx + dy * dy);
+    const ang = Math.atan2(dy, dx) * 180 / Math.PI;
+    const edge = document.createElement('div');
+    edge.className = 'edge';
+    edge.style.width = len + 'px';
+    edge.style.left = ax + 'px';
+    edge.style.top = ay + 'px';
+    edge.style.transform = 'rotate(' + ang + 'deg)';
+    graph.appendChild(edge);
+  });
+}
+
+function updateMiniGraph() {
+  ['mn1','mn2','mn3','mn4','mn5','mn6'].forEach(id => {
+    const n = document.getElementById(id);
+    if (n) { n.classList.remove('fail','affected','ok'); n.classList.add('ok'); }
+  });
+  if (failed.size === 0) return;
+  ['mn1','mn3','mn4','mn5'].forEach(id => { const n = document.getElementById(id); if (n) n.classList.add('affected'); });
+  if (failed.has(0)) { const n = document.getElementById('mn1'); if (n) n.className = 'node fail'; }
+  if (failed.has(1)) { const n = document.getElementById('mn3'); if (n) n.className = 'node fail'; }
+  if (failed.has(2)) { const n = document.getElementById('mn6'); if (n) n.className = 'node fail'; }
+}
+
+function failRobot(index) {
+  if (failed.has(index)) return;
+  failed.add(index);
+  const r = robots[index];
+  migrated += Math.floor(Math.random() * 2) + 1;
+  const alertEl = document.getElementById('alert');
+  if (alertEl) {
+    alertEl.classList.add('show');
+    document.getElementById('alertText').textContent = r.id + ' failed. Dependency engine identified affected missions and initiated workload migration.';
+  }
+  addEvent(r.id + ' FAILURE DETECTED', 'Telemetry anomaly confirmed. Health dropped below operational threshold.');
+  setTimeout(() => addEvent('Cascade analysis completed', 'Dependency graph identified ' + (2 + migrated) + ' affected resources/tasks.'), 600);
+  setTimeout(() => addEvent('Recovery planner activated', 'Tasks are being reassigned using mission criticality and battery constraints.'), 1100);
+  setTimeout(() => addEvent('Fleet rebalanced', 'Workload redistributed while minimizing unnecessary task migration.'), 1700);
+
+  /* shift failed unit position in twin */
+  const ti = liveTwin.findIndex(u => u.id === r.id);
+  if (ti >= 0) {
+    liveTwin[ti].x += (Math.random() * 30 - 15);
+    liveTwin[ti].y += (Math.random() * 20 - 10);
+  }
+
+  const hist = document.getElementById('missionHistory');
+  if (hist) {
+    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const m = missions.find(m => m.robot === r.id);
+    if (m) {
+      const avail = robots.findIndex((rb, j) => !failed.has(j) && rb.load < 80);
+      const to = avail >= 0 ? robots[avail].id : '—';
+      hist.insertAdjacentHTML('afterbegin', '<tr><td>' + time + '</td><td>' + m.name + '</td><td>' + r.id + '</td><td>' + to + '</td><td>Robot failure</td></tr>');
+    }
+  }
+  updateAll();
+}
+
+function emergencyRecovery() {
+  if (failed.size === 0) {
+    failRobot(5);
+    setTimeout(() => failRobot(1), 900);
+  } else {
+    addEvent('Emergency recovery executed', 'All available robots rebalanced against current fleet capacity.');
+    setTimeout(() => {
+      failed.clear();
+      migrated = 0;
+      liveTwin = JSON.parse(JSON.stringify(twinUnits));
+      const alertEl = document.getElementById('alert');
+      if (alertEl) alertEl.classList.remove('show');
+      addEvent('Fleet restored', 'Mission schedule returned to nominal operating conditions.');
+      updateAll();
+    }, 1500);
+  }
+}
+function runCascade() { failRobot(5); setTimeout(() => failRobot(1), 800); }
+function failAllLow() {
+  robots.forEach((r, i) => { if (r.health < 87 && !failed.has(i)) failRobot(i); });
+}
+function resetAll() {
+  failed.clear();
+  migrated = 0;
+  liveTwin = JSON.parse(JSON.stringify(twinUnits));
+  const alertEl = document.getElementById('alert');
+  if (alertEl) alertEl.classList.remove('show');
+  robots.forEach((r, i) => {
+    r.health = [96, 92, 89, 97, 84, 81, 94, 91][i];
+    r.battery = [87, 74, 81, 91, 68, 57, 79, 88][i];
+  });
+  addEvent('Simulation reset', 'All robots returned to nominal state.');
+  updateAll();
+  renderHealth();
+  renderMissions();
+}
+function updateAll() {
+  renderRobots();
+  renderTasks();
+  updateMiniGraph();
+  renderTwin();
+  updateInspector(selectedUnit);
+  const available = 8 - failed.size;
+  const availEl = document.getElementById('kpi-availability');
+  if (availEl) availEl.textContent = Math.round(available / 8 * 100) + '%';
+  const availTrend = document.getElementById('kpi-avail-trend');
+  if (availTrend) availTrend.textContent = available + ' / 8 operational';
+  const migEl = document.getElementById('kpi-migrated');
+  if (migEl) migEl.textContent = migrated;
+  const completion = Math.max(76, 98.7 - failed.size * 4.7 + migrated * 0.25);
+  const compEl = document.getElementById('kpi-completion');
+  if (compEl) compEl.textContent = completion.toFixed(1) + '%';
+  const effEl = document.getElementById('kpi-efficiency');
+  if (effEl) effEl.textContent = Math.max(68, 94 - failed.size * 3) + '%';
+  const predEl = document.getElementById('kpi-predicted');
+  if (predEl) predEl.textContent = Math.max(0, 1 + failed.size);
+  const twinSc = document.getElementById('twin-scenarios');
+  if (twinSc) twinSc.textContent = failed.size;
+  const box = document.getElementById('cascadeBox');
+  if (box) {
+    if (failed.size === 0) {
+      box.innerHTML = 'No active failures. Graph is in nominal state.<br>All units healthy. Migration paths idle.';
+    } else {
+      const names = [...failed].map(i => robots[i].id).join(', ');
+      box.innerHTML = '<strong style="color:var(--red)">Active failures:</strong> ' + names +
+        '<br>Affected units highlighted on the digital twin.<br>Cascade depth: 2 levels<br>Active plan: ' + plans[selectedPlan].name;
+    }
+  }
+}
+function addEvent(title, text) {
+  const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  const timeline = document.getElementById('timeline');
+  if (timeline) {
+    timeline.insertAdjacentHTML('afterbegin', '<div class="event"><div class="event-time">' + time + '</div><div class="event-body"><strong>' + title + '</strong><span>' + text + '</span></div></div>');
+  }
+  const log = document.getElementById('simLog');
+  if (log) {
+    const cls = title.includes('FAIL') ? 'er' : title.includes('restored') || title.includes('INIT') ? 'ok' : 'wn';
+    const tag = title.split(' ')[0].substring(0, 8).toUpperCase();
+    log.insertAdjacentHTML('afterbegin', '<div class="ln"><span class="ts">[' + time + ']</span> <span class="' + cls + '">' + tag + '</span> ' + text + '</div>');
+  }
+}
+
+renderRobots();
+renderTasks();
+renderFailBtns();
+renderSimFailBtns();
+renderPlans();
+renderMissions();
+drawMiniEdges();
+renderTwin();
+updateInspector(selectedUnit);
+updateAll();
+
+/* Live drift for digital twin */
+setInterval(() => {
+  liveTwin.forEach(u => {
+    if (failed.size === 0) {
+      u.x += (Math.random() * 6 - 3);
+      u.y += (Math.random() * 6 - 3);
+      /* keep in bounds */
+      u.x = Math.max(40, Math.min(640, u.x));
+      u.y = Math.max(60, Math.min(440, u.y));
+    }
+  });
+  if (document.getElementById('view-graph').classList.contains('active')) {
+    renderTwin();
+  }
+  if (failed.size === 0) {
+    robots.forEach(r => {
+      if (Math.random() > 0.7) r.battery = Math.max(35, r.battery - 1);
+      if (Math.random() > 0.92) r.health = Math.max(75, r.health - Math.floor(Math.random() * 2));
+    });
+    renderRobots();
+  }
+  const tick = document.getElementById('twin-tick');
+  if (tick) tick.textContent = 'just now';
+}, 2800);
+</script>
+</body>
+</html>
