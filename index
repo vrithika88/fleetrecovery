@@ -1,0 +1,2083 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FleetGuard — Robot Fleet Recovery</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #000000;
+  --panel: #0b0b0b;
+  --panel2: #151515;
+  --border: #2a2a2a;
+  --text: #ffffff;
+  --muted: #b8b8b8;
+  --cyan: #ffffff;
+  --green: #d8d8d8;
+  --yellow: #d0d0d0;
+  --red: #bdbdbd;
+  --blue: #ffffff;
+  --purple: #cfcfcf;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: Inter, system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14.5px;
+  min-height: 100vh;
+}
+button, input, select, a { font: inherit; }
+button { cursor: pointer; border: none; background: none; color: inherit; }
+a { color: inherit; text-decoration: none; }
+.mono { font-family: 'JetBrains Mono', monospace; }
+
+/* particle bg */
+#particles {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+}
+.layer { position: relative; z-index: 2; }
+.screen { display: none; min-height: 100vh; }
+.screen.on { display: block; }
+
+/* INTRO */
+.topnav {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 32px; border-bottom: 1px solid transparent;
+  position: sticky; top: 0; z-index: 40;
+  background: rgba(0,0,0,.78); backdrop-filter: blur(12px);
+}
+.topnav.scrolled { border-color: var(--border); }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 16px; }
+.brand i {
+  width: 34px; height: 34px; border-radius: 10px;
+  background: linear-gradient(135deg, var(--cyan), var(--purple));
+  display: grid; place-items: center; color: #000000; font-weight: 900; font-size: 14px;
+}
+.brand span { color: var(--cyan); }
+.nav-l { display: flex; gap: 22px; align-items: center; }
+.nav-l a { color: var(--muted); font-size: 13.5px; font-weight: 500; }
+.nav-l a:hover { color: var(--text); }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 9px 16px; border-radius: 8px; font-size: 13.5px; font-weight: 600;
+  border: 1px solid var(--border); background: var(--panel2); color: var(--text);
+  transition: .15s;
+}
+.btn:hover { border-color: var(--cyan); color: var(--cyan); }
+.btn.pri {
+  background: linear-gradient(135deg, rgba(255,255,255,.10), rgba(255,255,255,.08));
+  border-color: rgba(255,255,255,.35); color: var(--cyan);
+}
+.btn.pri:hover { background: rgba(255,255,255,.16); }
+.btn.danger { border-color:#ff3b3b !important; color:#fff !important; background:#c62828 !important; box-shadow:0 0 14px rgba(255,59,59,.25); }
+.btn.danger:hover { background:#e53935 !important; border-color:#ff5252 !important; }
+.btn.block { width: 100%; }
+.btn.sm { padding: 7px 12px; font-size: 12.5px; }
+
+.hero {
+  max-width: 1080px; margin: 0 auto; padding: 72px 32px 56px;
+  display: grid; grid-template-columns: 1.15fr .85fr; gap: 40px; align-items: center;
+}
+.hero .ey { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--cyan); font-weight: 600; margin-bottom: 12px; }
+.hero h1 { font-size: clamp(32px, 4.5vw, 48px); font-weight: 700; line-height: 1.1; margin-bottom: 14px; }
+.hero h1 em { font-style: normal; color: var(--muted); }
+.hero p { color: var(--muted); font-size: 16px; max-width: 460px; margin-bottom: 24px; line-height: 1.55; }
+.hero-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.hero-img {
+  border-radius: 14px; border: 1px solid var(--border); overflow: hidden;
+  aspect-ratio: 1; background: var(--panel);
+  box-shadow: 0 0 40px rgba(255,255,255,.08);
+}
+.hero-img img { width: 100%; height: 100%; object-fit: cover; opacity: .9; }
+
+.strip {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+  max-width: 1080px; margin: 0 auto;
+}
+.strip div { padding: 22px; text-align: center; border-right: 1px solid var(--border); }
+.strip div:last-child { border-right: 0; }
+.strip strong { display: block; font-size: 24px; color: var(--cyan); margin-bottom: 4px; }
+.strip span { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+
+.section { max-width: 1080px; margin: 0 auto; padding: 56px 32px; }
+.section h2 { font-size: 26px; margin-bottom: 8px; }
+.section .lead { color: var(--muted); margin-bottom: 28px; max-width: 520px; }
+.g { display: grid; gap: 14px; }
+.g3 { grid-template-columns: repeat(3, 1fr); }
+.g2 { grid-template-columns: 1fr 1fr; }
+.g4 { grid-template-columns: repeat(4, 1fr); }
+.g5 { grid-template-columns: repeat(5, 1fr); }
+
+.card {
+  background: rgba(10,10,10,.9); border: 1px solid var(--border);
+  border-radius: 12px; padding: 16px;
+}
+.card h3 { font-size: 14px; margin-bottom: 8px; }
+.card p { color: var(--muted); font-size: 13.5px; line-height: 1.5; }
+
+.team-card { text-align: left; }
+.av {
+  width: 44px; height: 44px; border-radius: 10px; margin-bottom: 12px;
+  background: linear-gradient(135deg, rgba(255,255,255,.10), rgba(255,255,255,.12));
+  border: 1px solid var(--border); display: grid; place-items: center;
+  font-weight: 700; color: var(--cyan); font-size: 13px;
+}
+.team-card .role { font-size: 12.5px; color: var(--muted); margin: 2px 0 8px; }
+.team-card a { color: var(--cyan); font-size: 13px; }
+.team-card a:hover { text-decoration: underline; }
+
+.contact-card h4 {
+  font-size: 11px; text-transform: uppercase; letter-spacing: .08em;
+  color: var(--muted); margin-bottom: 10px;
+}
+.contact-form { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+.contact-form input, .contact-form textarea, .field input {
+  width: 100%; padding: 11px 12px; border-radius: 8px;
+  background: var(--bg); border: 1px solid var(--border); color: var(--text); outline: none;
+}
+.contact-form input:focus, .contact-form textarea:focus, .field input:focus { border-color: var(--cyan); }
+.contact-form textarea { min-height: 90px; resize: vertical; }
+.form-ok { display: none; color: var(--green); font-size: 13px; }
+.form-ok.on { display: block; }
+.foot {
+  max-width: 1080px; margin: 0 auto; padding: 20px 32px 36px;
+  display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+  color: var(--muted); font-size: 12.5px; border-top: 1px solid var(--border);
+}
+
+/* LOGIN */
+.login-wrap { min-height: 100vh; display: grid; place-items: center; padding: 20px; }
+.login-box {
+  width: 100%; max-width: 400px; padding: 32px 28px;
+  background: rgba(10,10,10,.95); border: 1px solid var(--border); border-radius: 14px;
+  box-shadow: 0 0 50px rgba(255,255,255,.06);
+}
+.login-box h1 { font-size: 22px; margin: 14px 0 6px; }
+.login-box .sub { color: var(--muted); font-size: 13.5px; margin-bottom: 22px; line-height: 1.5; }
+.field { margin-bottom: 12px; }
+.field label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 5px; font-weight: 600; }
+.login-err {
+  display: none; padding: 10px; border-radius: 8px; margin-bottom: 12px;
+  background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.3); color: var(--red); font-size: 13px;
+}
+.login-err.on { display: block; }
+.login-back { display: block; text-align: center; margin-top: 16px; color: var(--muted); font-size: 13px; }
+.login-back:hover { color: var(--cyan); }
+
+/* APP */
+.app { display: grid; grid-template-columns: 230px 1fr; min-height: 100vh; }
+.side {
+  background: rgba(5,5,5,.95); border-right: 1px solid var(--border);
+  padding: 18px 12px; display: flex; flex-direction: column;
+  position: sticky; top: 0; height: 100vh;
+}
+.side .brand { padding: 4px 8px 22px; }
+.nav { display: flex; flex-direction: column; gap: 3px; flex: 1; }
+.nav button {
+  text-align: left; padding: 11px 12px; border-radius: 8px;
+  color: var(--muted); font-size: 13.5px; font-weight: 500;
+  display: flex; gap: 10px; align-items: center; transition: .15s;
+}
+.nav button:hover { background: rgba(255,255,255,.06); color: var(--text); }
+.nav button.on {
+  background: rgba(255,255,255,.12); color: var(--cyan);
+  border: 1px solid rgba(255,255,255,.16);
+}
+.side-foot {
+  padding: 12px; border-radius: 10px; border: 1px solid var(--border);
+  background: var(--panel); font-size: 12.5px; color: var(--muted);
+}
+.side-foot b { color: var(--text); display: block; margin-bottom: 2px; }
+.dot {
+  width: 7px; height: 7px; border-radius: 50%; background: var(--green);
+  box-shadow: 0 0 8px var(--green); display: inline-block; margin-right: 6px;
+}
+
+main { padding: 22px 24px 40px; min-width: 0; }
+.view { display: none; }
+.view.on { display: block; animation: fade .2s ease; }
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+
+.head {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  margin-bottom: 18px; gap: 12px; flex-wrap: wrap;
+}
+.head h1 { font-size: 22px; font-weight: 700; }
+.head p { color: var(--muted); font-size: 13.5px; margin-top: 3px; }
+.head-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.live {
+  display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px;
+  border-radius: 20px; font-size: 12px; font-weight: 600;
+  border: 1px solid rgba(220,220,220,.35); color: var(--green);
+  background: rgba(220,220,220,.1);
+}
+.live i { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 6px var(--green); }
+
+.kpi label { font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); font-weight: 600; }
+.kpi .v { font-size: 26px; font-weight: 700; margin-top: 4px; color: var(--cyan); }
+.kpi .t { font-size: 12px; color: var(--muted); margin-top: 3px; }
+
+.robot-card {
+  background: var(--panel2); border: 1px solid var(--border); border-radius: 12px;
+  overflow: hidden; cursor: pointer; transition: .15s;
+}
+.robot-card:hover { border-color: rgba(255,255,255,.35); transform: translateY(-2px); }
+.robot-card.sel { border-color: var(--cyan); box-shadow: 0 0 0 1px rgba(255,255,255,.3); }
+.robot-card.risk { border-color: rgba(220,220,220,.4); }
+.robot-card.failed { border-color: rgba(255,255,255,.45); }
+.robot-ph { height: 110px; background: #080808; position: relative; }
+.robot-ph img { width: 100%; height: 100%; object-fit: cover; opacity: .85; }
+.robot-ph .st {
+  position: absolute; top: 8px; right: 8px; font-size: 10px; font-weight: 700;
+  padding: 3px 8px; border-radius: 6px; text-transform: uppercase;
+}
+.st-ok { background: rgba(220,220,220,.2); color: var(--green); }
+.st-risk { background: rgba(220,220,220,.2); color: var(--yellow); }
+.st-bad { background: rgba(255,255,255,.2); color: var(--red); }
+.robot-bd { padding: 12px; }
+.robot-bd .nm { font-weight: 700; font-size: 13.5px; }
+.robot-bd .mt { font-size: 11.5px; color: var(--muted); margin-top: 2px; font-family: 'JetBrains Mono', monospace; }
+.bar-lab { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-top: 7px; }
+.bar { height: 4px; background: #1f1f1f; border-radius: 3px; margin-top: 3px; overflow: hidden; }
+.bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--cyan), var(--blue)); border-radius: 3px; }
+.bar i.lo { background: linear-gradient(90deg, var(--yellow), var(--red)); }
+
+/* twin layout like screenshot */
+.twin-layout {
+  display: grid; grid-template-columns: 1fr 300px; gap: 0;
+  border: 1px solid var(--border); border-radius: 14px; overflow: hidden;
+  background: #d0d0d0; min-height: 480px;
+}
+.scene-wrap { position: relative; min-height: 480px; background: #d0d0d0; }
+#ccc { width: 100%; height: 100%; display: block; cursor: grab; min-height: 480px; }
+.scene-hint {
+  position: absolute; bottom: 12px; left: 12px;
+  font-size: 11px; color: var(--muted); background: rgba(0,0,0,.85);
+  border: 1px solid var(--border); border-radius: 6px; padding: 5px 10px;
+}
+
+/* inspector panel - screenshot format */
+.inspector {
+  background: var(--panel); border-left: 1px solid var(--border);
+  padding: 14px; overflow-y: auto; max-height: 520px;
+}
+.insp-badge {
+  display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: .06em;
+  padding: 4px 10px; border-radius: 6px; margin-bottom: 12px;
+}
+.insp-badge.ok { background: rgba(220,220,220,.15); color: var(--green); border: 1px solid rgba(220,220,220,.3); }
+.insp-badge.risk { background: rgba(220,220,220,.15); color: var(--yellow); border: 1px solid rgba(220,220,220,.3); }
+.insp-badge.bad { background: rgba(255,255,255,.15); color: var(--red); border: 1px solid rgba(255,255,255,.3); }
+.insp-status {
+  border: 1px solid rgba(255,255,255,.25); background: rgba(255,255,255,.06);
+  border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; font-size: 12.5px;
+}
+.insp-status.ok {
+  border-color: rgba(220,220,220,.25); background: rgba(220,220,220,.06);
+}
+.insp-status.risk {
+  border-color: rgba(220,220,220,.25); background: rgba(220,220,220,.06);
+}
+.insp-status strong { display: block; margin-bottom: 3px; font-size: 11px; letter-spacing: .04em; }
+.insp-status.ok strong { color: var(--green); }
+.insp-status.risk strong { color: var(--yellow); }
+.insp-status.bad strong { color: var(--red); }
+.insp-status span { color: var(--muted); }
+.metrics {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px;
+}
+.metric {
+  background: var(--panel2); border: 1px solid var(--border);
+  border-radius: 10px; padding: 10px;
+}
+.metric .l { font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-bottom: 4px; }
+.metric .v { font-size: 18px; font-weight: 700; }
+.metric .mb { height: 3px; background: #1f1f1f; border-radius: 2px; margin-top: 6px; overflow: hidden; }
+.metric .mb i { display: block; height: 100%; border-radius: 2px; }
+.metric .mb i.bat { background: var(--cyan); }
+.metric .mb i.thm { background: var(--yellow); }
+.metric .mb i.lod { background: var(--purple); }
+.metric .mb i.com { background: var(--green); }
+.hist-title { font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-bottom: 6px; }
+.hist {
+  display: flex; align-items: flex-end; gap: 2px; height: 36px; margin-bottom: 14px;
+}
+.hist span {
+  flex: 1; background: var(--blue); border-radius: 2px 2px 0 0; min-width: 3px; opacity: .85;
+}
+.info-row {
+  display: flex; justify-content: space-between; font-size: 12.5px;
+  padding: 7px 0; border-bottom: 1px solid rgba(70,70,70,.8);
+}
+.info-row .l { color: var(--muted); }
+.info-row .v { font-weight: 600; }
+.focus-btn {
+  margin-top: 14px; width: 100%; padding: 11px;
+  border-radius: 8px; font-weight: 600; font-size: 13px;
+  background: linear-gradient(135deg, rgba(255,255,255,.10), rgba(255,255,255,.15));
+  border: 1px solid rgba(255,255,255,.35); color: var(--cyan);
+}
+
+.bottom-row {
+  display: grid; grid-template-columns: 1.2fr 1fr; gap: 14px; margin-top: 14px;
+}
+.dep-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px;
+  background: var(--panel2); margin-bottom: 6px; font-size: 13px;
+}
+.dep-row .src { font-weight: 600; color: var(--cyan); }
+
+.drawer {
+  display: none; margin-top: 14px; border: 1px solid var(--border);
+  border-radius: 12px; background: var(--panel); padding: 16px;
+}
+.drawer.on { display: block; }
+.assign-box { margin-top: 12px; padding: 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--panel2); }
+.assign-box h4 { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-bottom: 8px; }
+.job-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px; border: 1px solid var(--border); border-radius: 6px; margin-bottom: 5px; font-size: 12.5px;
+}
+.assign-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.assign-row select {
+  flex: 1; min-width: 140px; padding: 9px 10px; border-radius: 8px;
+  background: var(--bg); border: 1px solid var(--border); color: var(--text);
+}
+
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th {
+  text-align: left; padding: 10px; color: var(--muted); font-size: 11px;
+  text-transform: uppercase; border-bottom: 1px solid var(--border);
+}
+td { padding: 11px 10px; border-bottom: 1px solid rgba(70,70,70,.5); }
+tr:hover td { background: rgba(255,255,255,.04); cursor: pointer; }
+
+.alert {
+  display: none; padding: 11px 14px; border-radius: 10px; margin-bottom: 12px;
+  background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.3);
+  color: #d0d0d0; align-items: center; justify-content: space-between;
+}
+.alert.on { display: flex; }
+
+.toast-wrap { position: fixed; bottom: 18px; right: 18px; z-index: 300; display: flex; flex-direction: column; gap: 8px; }
+.toast {
+  padding: 11px 14px; border-radius: 10px; background: var(--panel);
+  border: 1px solid var(--border); font-size: 13px; max-width: 290px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.4);
+}
+.toast strong { display: block; margin-bottom: 2px; color: var(--cyan); }
+
+
+/* enhanced simulation lab */
+.sim-shell{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(260px,.65fr);gap:14px}
+.sim-chart{position:relative;min-height:390px;background:linear-gradient(180deg,rgba(12,12,12,.96),rgba(0,0,0,.98));border:1px solid var(--border);border-radius:12px;padding:12px;overflow:hidden}
+#effCanvas{width:100%;height:340px;display:block;cursor:crosshair}
+.sim-legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:7px;font-size:11px;color:var(--muted)}
+.sim-legend span{display:inline-flex;align-items:center;gap:5px}.sim-legend i{width:18px;height:3px;border-radius:2px;display:inline-block}
+.sim-tooltip{position:absolute;display:none;pointer-events:none;padding:8px 10px;border:1px solid var(--border);background:rgba(0,0,0,.96);border-radius:8px;font-size:11px;line-height:1.45;z-index:4;box-shadow:0 8px 22px rgba(0,0,0,.3)}
+.sim-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}.sim-controls select,.sim-controls input{background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:7px;padding:7px 9px}
+.timeline{height:6px;background:#1f1f1f;border-radius:5px;overflow:hidden;margin-top:8px}.timeline i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--cyan),var(--purple));transition:width .2s}
+.sim-mini{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.sim-mini .metric{padding:9px}
+.fpa-flow{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}.fpa-node{position:relative;padding:11px;border:1px solid var(--border);border-radius:9px;background:var(--panel2);font-size:12px;min-height:90px}.fpa-node:not(:last-child)::after{content:'→';position:absolute;right:-9px;top:34px;color:var(--cyan);z-index:2}.fpa-node b{display:block;margin-bottom:5px;color:var(--cyan)}
+.fpa-interactive{display:grid;grid-template-columns:1fr 1fr;gap:14px}.fpa-slider{width:100%;accent-color:var(--cyan)}.impact-meter{height:9px;background:#1f1f1f;border-radius:6px;overflow:hidden;margin:8px 0}.impact-meter i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--green),var(--yellow),var(--red));transition:.25s}.fpa-readout{padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--panel2);line-height:1.6;color:var(--muted)}
+.forecast-summary{display:flex;justify-content:space-between;gap:14px;align-items:center;padding:10px;border:1px solid var(--border);border-radius:10px;background:#0a0a0a;margin-bottom:10px}.forecast-index{font-size:24px;font-weight:800;text-align:right}.forecast-index span{display:block;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}.forecast-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.forecast-card{border:1px solid var(--border);border-radius:10px;overflow:hidden;background:#090909}.forecast-card img{width:100%;height:72px;object-fit:cover;display:block;filter:grayscale(1);opacity:.82}.forecast-card>div,.forecast-card>b,.forecast-card>p,.forecast-card>small{display:block;margin-left:9px;margin-right:9px}.forecast-time{font-size:10px;color:var(--muted);margin-top:7px}.forecast-card>b{font-size:12px;margin-top:3px}.forecast-health{font-size:12px;font-weight:800;margin-top:5px}.forecast-card p{font-size:10.5px;line-height:1.4;color:var(--muted);margin-top:4px}.forecast-card small{font-size:9.5px;color:#aaa;margin-top:6px;margin-bottom:8px}.forecast-note{font-size:10.5px;color:var(--muted);line-height:1.45;margin-top:9px;padding-top:8px;border-top:1px solid var(--border)}
+.cine-overlay{position:absolute;inset:0;pointer-events:none;overflow:hidden;opacity:0;transition:opacity .25s}.cine-overlay.on{opacity:1}.cine-sweep{position:absolute;width:180%;height:180%;left:-40%;top:-40%;border:2px solid rgba(255,255,255,.45);border-radius:50%;transform:rotate(-18deg);animation:cineSweep 2.8s ease-in-out both}.cine-sweep:after{content:'';position:absolute;left:50%;top:50%;width:48%;height:2px;background:linear-gradient(90deg,transparent,var(--cyan));transform-origin:left center;box-shadow:0 0 18px rgba(255,255,255,.6)}
+@keyframes cineSweep{0%{transform:rotate(-55deg) scale(.78);opacity:0}18%{opacity:1}50%{transform:rotate(18deg) scale(1.02);opacity:1}100%{transform:rotate(-55deg) scale(.78);opacity:0}}
+@media (max-width:1000px){.sim-shell,.fpa-interactive{grid-template-columns:1fr}.fpa-flow{grid-template-columns:1fr 1fr}.fpa-node:not(:last-child)::after{display:none}}
+@media (max-width: 1000px) {
+  .hero, .g2, .twin-layout, .bottom-row { grid-template-columns: 1fr; }
+  .g3, .g4, .g5, .strip { grid-template-columns: 1fr 1fr; }
+  .app { grid-template-columns: 1fr; }
+  .side { display: none; }
+  .nav-l a:not(.btn) { display: none; }
+}
+
+.insp-badge.bad{background:#ff3030!important;color:#fff!important;border-color:#ff3030!important;box-shadow:0 0 18px rgba(255,48,48,.35)} .insp-status.bad{border-color:#ff3030!important;background:rgba(255,48,48,.10)!important}.robot-card.failed{border-color:#ff3030!important;box-shadow:0 0 20px rgba(255,48,48,.18)} .robot-card.failed .nm{color:#ff4b4b!important}
+/* enhanced observatory + home polish */
+body{font-size:15px}
+.card p,.fpa-node,.fpa-readout,.root-cause-visual span,.image-caption{font-size:13.5px;line-height:1.65}
+.fpa-observatory{display:grid;grid-template-columns:1.15fr .85fr;gap:14px;margin-top:14px}
+.risk-console{position:relative;min-height:330px;overflow:hidden;background:radial-gradient(circle at 50% 48%,rgba(77,208,225,.10),transparent 38%),#050505;border:1px solid var(--border);border-radius:12px;padding:16px}
+.risk-console canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.risk-ui{position:relative;z-index:2;display:flex;flex-direction:column;height:100%}
+.risk-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.risk-kicker{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--cyan);font-weight:700}
+.risk-prob{font-size:48px;font-weight:800;line-height:1;text-shadow:0 0 22px rgba(255,255,255,.15)}
+.risk-prob small{display:block;font-size:10px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-top:5px}
+.risk-status{display:inline-flex;align-items:center;gap:7px;padding:6px 9px;border:1px solid var(--border);border-radius:999px;background:rgba(0,0,0,.6);font-size:11px;margin-top:12px}
+.risk-status i{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 9px currentColor}
+.risk-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:auto}
+.risk-stat{padding:9px;border:1px solid var(--border);background:rgba(0,0,0,.55);border-radius:9px}.risk-stat b{display:block;font-size:18px}.risk-stat span{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.risk-timeline{margin-top:12px;display:flex;gap:5px;align-items:center}.risk-timeline span{height:6px;flex:1;border-radius:8px;background:#242424}.risk-timeline span.on{background:var(--cyan);box-shadow:0 0 8px rgba(77,208,225,.35)}
+.risk-insight{display:flex;flex-direction:column;gap:10px}.insight-card{padding:14px;border:1px solid var(--border);border-radius:10px;background:linear-gradient(145deg,#0b0b0b,#050505)}.insight-card h4{font-size:13px;margin-bottom:6px}.insight-card p{font-size:12.5px;color:var(--muted);line-height:1.6;margin:0}.prob-legend{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.prob-legend span{font-size:10px;padding:4px 7px;border-radius:6px;border:1px solid var(--border)}
+@media(max-width:900px){.fpa-observatory{grid-template-columns:1fr}.risk-console{min-height:290px}}
+/* cinematic home */
+.hero-cinematic {
+  position: relative;
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: none;
+  padding: 80px 40px 60px;
+  overflow: hidden;
+  grid-template-columns: none;
+}
+.hero-net {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse at 50% 45%, rgba(255,255,255,.11), transparent 55%),
+    radial-gradient(ellipse at 20% 80%, rgba(77,208,225,.09), transparent 40%),
+    radial-gradient(ellipse at 80% 65%, rgba(139,124,255,.08), transparent 42%);
+  pointer-events: none;
+}
+.hero-net canvas {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+}
+.hero-cinematic::after{content:'';position:absolute;inset:12%;border:1px solid rgba(255,255,255,.045);border-radius:50%;pointer-events:none;box-shadow:0 0 90px rgba(255,255,255,.045),inset 0 0 90px rgba(255,255,255,.035);animation:heroPulse 5s ease-in-out infinite;}
+@keyframes heroPulse{0%,100%{opacity:.35;transform:scale(.96)}50%{opacity:.8;transform:scale(1.02)}}
+.hero-cinematic .hero-net{background:radial-gradient(ellipse at 50% 45%,rgba(255,255,255,.16),transparent 52%),radial-gradient(ellipse at 50% 45%,rgba(255,255,255,.08),transparent 32%),#000;}
+.hero-net canvas{filter:drop-shadow(0 0 5px rgba(255,255,255,.45));}
+.hero-content {
+  position: relative; z-index: 3;
+  display: grid;
+  grid-template-columns: 1fr 1.2fr 1fr;
+  gap: 28px;
+  align-items: center;
+  max-width: 1100px;
+  width: 100%;
+  transition: transform .15s ease-out;
+}
+.hero-center { text-align: center; }
+.hero-title {
+  font-size: clamp(52px, 9vw, 108px) !important;
+  text-shadow: 0 0 18px rgba(255,255,255,.28),0 0 55px rgba(255,255,255,.16),0 0 110px rgba(255,255,255,.08);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 0.95 !important;
+  margin: 12px 0 16px !important;
+  text-shadow: 0 0 60px rgba(255,255,255,.15);
+}
+.hero-tag {
+  color: var(--muted);
+  font-size: 15px !important;
+  max-width: 360px;
+  margin: 0 auto 28px !important;
+}
+.hero-col .callout {
+  display: flex; gap: 12px; align-items: flex-start;
+  max-width: 240px;
+  opacity: 0.9;
+}
+.hero-col.right { display: flex; justify-content: flex-end; }
+.dot-o {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--cyan); box-shadow: 0 0 10px var(--cyan);
+  margin-top: 6px; flex-shrink: 0;
+}
+.callout-k {
+  font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--cyan); font-weight: 600; margin-bottom: 6px;
+}
+.callout p { font-size: 13px; color: var(--muted); line-height: 1.55; margin: 0; }
+.scroll-hint {
+  position: absolute; bottom: 28px; left: 50%; transform: translateX(-50%);
+  z-index: 3; font-size: 11px; letter-spacing: .2em; color: var(--muted);
+}
+.scroll-hint::before {
+  content: ''; display: block; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--cyan); margin: 0 auto 8px; box-shadow: 0 0 8px var(--cyan);
+}
+
+/* meteors layer */
+#meteors {
+  position: fixed; inset: 0; z-index: 1; pointer-events: none; overflow: hidden;
+}
+.meteor {
+  position: absolute;
+  width: 2px;
+  height: 90px;
+  background: linear-gradient(to bottom, transparent 0%, rgba(255,255,255,.15) 20%, rgba(255,255,255,.95) 70%, #ffffff 100%);
+  border-radius: 2px;
+  opacity: 0;
+  filter: drop-shadow(0 0 8px rgba(255,255,255,.9));
+  /* backslash shape: diagonal \\ */
+  transform: rotate(35deg);
+  transform-origin: center top;
+  animation: meteorFall linear forwards;
+  pointer-events: none;
+}
+@keyframes meteorFall {
+  0% {
+    opacity: 0;
+    left: -5vw;
+    top: var(--start-y, 0vh);
+  }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% {
+    opacity: 0;
+    left: 105vw;
+    top: var(--end-y, 100vh);
+  }
+}
+
+@media (max-width: 900px) {
+  .hero-content { grid-template-columns: 1fr; text-align: center; }
+  .hero-col { display: none !important; }
+}
+
+
+.modal-bg {
+  display: none; position: fixed; inset: 0; z-index: 400;
+  background: rgba(0,0,0,.75); backdrop-filter: blur(6px);
+  align-items: center; justify-content: center; padding: 20px;
+}
+.modal-bg.on { display: flex; }
+.modal {
+  width: 100%; max-width: 400px; background: var(--panel);
+  border: 1px solid var(--border); border-radius: 14px; padding: 24px;
+  box-shadow: 0 20px 50px rgba(0,0,0,.5);
+}
+.modal h2 { font-size: 18px; margin-bottom: 6px; }
+.modal .sub { color: var(--muted); font-size: 13px; margin-bottom: 16px; }
+.modal .row { display: flex; gap: 8px; margin-top: 14px; }
+
+.status-risk { color: #ff4d4d !important; font-weight: 800; }
+.fleet-risk-name { color:#ff4d4d !important; font-weight:800; }
+.fleet-row-risk td { background:rgba(255,55,55,.035); }
+.status-ok { color: #d8d8d8; font-weight: 600; }
+.status-bad { color: #bdbdbd; font-weight: 700; }
+.speed-ctrl { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.speed-ctrl input[type=range] { width: 100px; accent-color: var(--cyan); }
+.speed-ctrl .eta { font-size: 11.5px; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+
+.eff-card { padding: 12px; }
+.eff-card .nm { font-size: 12.5px; font-weight: 600; margin-bottom: 8px; }
+.eff-bars { display: flex; align-items: flex-end; gap: 2px; height: 48px; }
+.eff-bars i { flex: 1; border-radius: 2px 2px 0 0; background: linear-gradient(to top, var(--cyan), var(--blue)); min-width: 3px; opacity: 0.85; }
+.eff-bars i.dim { background: linear-gradient(to top, var(--red), #c0c0c0); opacity: 0.7; }
+.fpa-item { padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13.5px; }
+.fpa-item:last-child { border-bottom: none; }
+.fpa-item b { color: var(--cyan); }
+
+/* visual polish: slightly larger typography + accent colors */
+body{font-size:15.5px}
+.nav-l a{font-size:14px}.btn{font-size:14px}.btn.sm{font-size:13px}
+.card h3{font-size:15px}.card p{font-size:14px}
+.head h1{font-size:24px}.head p{font-size:14px}
+.kpi label{font-size:12px}.kpi .t{font-size:13px}
+.robot-bd .nm{font-size:14.5px}.robot-bd .mt{font-size:12.5px}.bar-lab{font-size:12px}
+table{font-size:14px}table th{font-size:12px}
+.sim-legend{font-size:12px}.sim-tooltip{font-size:12px}
+.fpa-node{font-size:13px}.fpa-item{font-size:14px}
+.fpa-readout{font-size:14px}.forecast-card>b{font-size:13px}.forecast-card p{font-size:11.5px}.forecast-note{font-size:11.5px}
+.plan-card{position:relative;overflow:hidden;border-top:3px solid var(--plan-accent,#777)!important}
+.plan-card .plan-icon{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;font-size:18px;font-weight:800;background:color-mix(in srgb,var(--plan-accent,#777) 16%,transparent);color:var(--plan-accent,#fff);border:1px solid color-mix(in srgb,var(--plan-accent,#777) 45%,transparent);margin-bottom:10px}
+.plan-card .plan-accent-line{height:3px;border-radius:3px;background:var(--plan-accent,#777);margin:10px 0 12px;opacity:.8}
+.fpa-panel-title{display:flex;align-items:center;gap:8px}.fpa-panel-title .badge{font-size:10px;padding:3px 7px;border-radius:999px;border:1px solid #444;color:#aaa}
+.fpa-image-card{overflow:hidden}.fpa-image-card>img{width:100%;height:185px;object-fit:cover;border-radius:9px;display:block;filter:grayscale(.15) contrast(1.05);border:1px solid var(--border)}.fpa-image-card p,.image-caption{color:var(--muted);font-size:12px;line-height:1.55;margin:10px 0 0}.image-caption b{color:var(--text)}
+.root-cause-visual{display:grid;grid-template-columns:72px 1fr;gap:10px;align-items:center;padding:10px;border:1px solid var(--border);border-radius:10px;background:#090909;margin-bottom:8px}
+.root-cause-visual img{width:72px;height:52px;object-fit:cover;border-radius:7px;filter:grayscale(.35);opacity:.9}
+.root-cause-visual b{font-size:13px}.root-cause-visual span{display:block;color:var(--muted);font-size:11.5px;line-height:1.45;margin-top:3px}
+.forecast-card{border-top:3px solid var(--forecast-accent,#777)}
+.forecast-card .forecast-signal{display:flex;align-items:center;gap:6px;font-size:11px;color:#ddd;margin-top:6px}
+.forecast-card .forecast-signal i{width:7px;height:7px;border-radius:50%;background:var(--forecast-accent,#777);box-shadow:0 0 8px var(--forecast-accent,#777)}
+@media(max-width:700px){.root-cause-visual{grid-template-columns:58px 1fr}.root-cause-visual img{width:58px;height:46px}}
+
+</style>
+</head>
+<body>
+<canvas id="particles"></canvas>
+<div id="meteors"></div>
+
+<!-- INTRO -->
+<div class="screen on layer" id="screenIntro">
+  <nav class="topnav" id="topnav">
+    <div class="brand"><i>F</i>Fleet<span>Guard</span></div>
+    <div class="nav-l">
+      <a href="#about">About</a>
+      <a href="#team">Team</a>
+      <a href="#contact">Contact</a>
+      <a href="#help">Help</a>
+      <button class="btn pri sm" onclick="goLogin()">Operator access</button>
+    </div>
+  </nav>
+  <section class="hero hero-cinematic" id="heroHome">
+    <div class="hero-net" id="heroNet" aria-hidden="true"></div>
+    <div class="hero-content" id="heroContent">
+      <div class="hero-col left">
+        <div class="callout">
+          <span class="dot-o"></span>
+          <div>
+            <div class="callout-k">WE BUILD</div>
+            <p>operations software for robot fleets under failure pressure — visibility, cascade control, and manual recovery.</p>
+          </div>
+        </div>
+      </div>
+      <div class="hero-center">
+        <div class="ey">Autonomous fleet operations</div>
+        <h1 class="hero-title">FLEET<br>GUARD</h1>
+        <p class="hero-tag">Recover the cell before the cascade spreads.</p>
+        <div class="hero-actions">
+          <button class="btn pri" onclick="goLogin()">Enter console</button>
+          <a class="btn" href="#about">Explore</a>
+        </div>
+      </div>
+      <div class="hero-col right">
+        <div class="callout">
+          <span class="dot-o"></span>
+          <div>
+            <div class="callout-k">WE RUN</div>
+            <p>live 3D twins, health envelopes, and operator-driven work reassignment across the floor.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="scroll-hint">SCROLL</div>
+  </section>
+  <div class="strip">
+    <div><strong>24/7</strong><span>Coverage</span></div>
+    <div><strong>&lt;2s</strong><span>Failover</span></div>
+    <div><strong>8+</strong><span>Units / cell</span></div>
+    <div><strong>Live</strong><span>3D twin</span></div>
+  </div>
+  <section class="section" id="about">
+    <h2>About</h2>
+    <p class="lead">FleetGuard is an operations console for robot fleets under failure pressure.</p>
+    <div class="g g3">
+      <div class="card"><h3>Health watch</h3><p>Per-unit battery, thermal, load, and survival estimates.</p></div>
+      <div class="card"><h3>Cascade view</h3><p>See dependency edges and impact when a unit drops.</p></div>
+      <div class="card"><h3>Manual assign</h3><p>You choose which healthy robot inherits work.</p></div>
+    </div>
+  </section>
+  <section class="section" id="team">
+    <h2>Team</h2>
+    <p class="lead">Reach the people behind the console.</p>
+    <div class="g g3">
+      <div class="card team-card"><div class="av">VG</div><h3>Varshini Gadwala</h3><div class="role">Systems lead</div><a href="mailto:abc@gmail.com">abc@gmail.com</a></div>
+      <div class="card team-card"><div class="av">VT</div><h3>Vrithika Tada</h3><div class="role">Fleet operations</div><a href="mailto:def@gmail.com">def@gmail.com</a></div>
+      <div class="card team-card"><div class="av">NV</div><h3>Nithisha Vempalli</h3><div class="role">Recovery engineering</div><a href="mailto:ghi@gmail.com">ghi@gmail.com</a></div>
+    </div>
+  </section>
+  <section class="section" id="contact">
+    <h2>Contact</h2>
+    <p class="lead">Help desk and message form — fully usable.</p>
+    <div class="g g2">
+      <div class="card contact-card">
+        <h4>Help desk</h4>
+        <p><a href="tel:+18005550192" style="color:var(--cyan)">+1 (800) 555-0192</a></p>
+        <p style="margin-top:6px"><a href="mailto:help@fleetguard.ops" style="color:var(--cyan)">help@fleetguard.ops</a></p>
+        <p style="color:var(--muted);font-size:13px;margin-top:12px">24/7 UTC · cascade priority line</p>
+      </div>
+      <div class="card contact-card">
+        <h4>Message</h4>
+        <form class="contact-form" onsubmit="return sendContact(event)">
+          <input name="name" placeholder="Name" required>
+          <input name="email" type="email" placeholder="Email" required>
+          <textarea name="msg" placeholder="Message" required></textarea>
+          <button class="btn pri" type="submit">Send</button>
+          <div class="form-ok" id="formOk">Message recorded for the desk.</div>
+        </form>
+      </div>
+    </div>
+  </section>
+  <section class="section" id="help">
+    <h2>Help</h2>
+    <div class="g g2">
+      <div class="card"><h3>Sign-in</h3><p>Use your operator credentials. Contact the desk if your cell is not provisioned.</p></div>
+      <div class="card"><h3>Unit failure</h3><p>Open the unit panel, review metrics, then manually assign jobs to a healthy backup.</p></div>
+    </div>
+  </section>
+  <footer class="foot">
+    <span>© 2026 FleetGuard</span>
+    <span><a href="mailto:help@fleetguard.ops">help@fleetguard.ops</a> · +1 (800) 555-0192</span>
+  </footer>
+</div>
+
+<!-- LOGIN -->
+<div class="screen layer" id="screenLogin">
+  <div class="login-wrap">
+    <div class="login-box">
+      <div class="brand"><i>F</i>Fleet<span>Guard</span></div>
+      <h1>Operator console</h1>
+      <p class="sub">Sign in to the FleetGuard recovery console — live health, 3D twin, and manual work reassignment.</p>
+      <div class="login-err" id="loginErr"></div>
+      <div class="field"><label>Username</label><input id="userIn" autocomplete="username"></div>
+      <div class="field"><label>Password</label><input id="passIn" type="password" autocomplete="current-password"></div>
+      <button class="btn pri block" id="btnLogin" style="margin-top:6px">Sign in</button>
+      <a class="login-back" href="#" onclick="goIntro();return false">← Back to overview</a>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="screen layer" id="screenApp">
+  <div class="app">
+    <aside class="side">
+      <div class="brand"><i>F</i>Fleet<span>Guard</span></div>
+      <nav class="nav">
+        <button class="on" data-v="command">◉ Command Center</button>
+        <button data-v="fleet">▣ Fleet Health</button>
+        <button data-v="twin">◈ 3D Digital Twin</button>
+        <button data-v="plans">↻ Recovery Plans</button>
+        <button data-v="fpa">◎ Failure Propagation</button>
+        <button data-v="sim">⚡ Simulation Lab</button>
+      </nav>
+      <div class="side-foot">
+        <div><span class="dot"></span>Simulation Online</div>
+        <div style="margin-top:4px;font-size:11.5px" id="sideUser">Digital twin synchronized</div>
+        <button class="btn sm block" style="margin-top:10px" onclick="logout()">Sign out</button>
+      </div>
+    </aside>
+    <main>
+      <div id="view-command" class="view on">
+        <div class="head">
+          <div><h1>Command Center</h1><p>Click a robot for full analysis · assign work manually</p></div>
+          <div class="head-actions">
+            <span class="live"><i></i> LIVE</span>
+            <button class="btn pri" onclick="openAddRobot()">+ Add robot</button>
+            <button class="btn danger" onclick="emergency()">Emergency recovery</button>
+          </div>
+        </div>
+        <div class="alert" id="alert"><span><b>Cascade active</b></span><button class="btn sm" onclick="emergency()">Recover</button></div>
+        <div class="g g5" style="margin-bottom:14px">
+          <div class="card kpi"><label>Online</label><div class="v" id="kOn">8</div><div class="t" id="kOnT">of 8</div></div>
+          <div class="card kpi"><label>At risk</label><div class="v" id="kRisk">2</div><div class="t">watch</div></div>
+          <div class="card kpi"><label>Reassigned</label><div class="v" id="kMig">0</div><div class="t">jobs</div></div>
+          <div class="card kpi"><label>Survival</label><div class="v" id="kSurv">90%</div><div class="t">avg</div></div>
+          <div class="card kpi"><label>Completion</label><div class="v" id="kComp">98%</div><div class="t">missions</div></div>
+        </div>
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;margin-bottom:12px"><h3 style="font-size:14px">Fleet units</h3><span style="color:var(--muted);font-size:12px">photos · click for detail</span></div>
+          <div class="g g4" id="robotGrid"></div>
+          <div class="drawer" id="drawer"></div>
+        </div>
+      </div>
+
+      <div id="view-fleet" class="view">
+        <div class="head"><div><h1>Fleet Health</h1><p>Telemetry table</p></div></div>
+        <div class="card"><table><thead><tr><th>Unit</th><th>Status</th><th>Health</th><th>Battery</th><th>Task</th><th>Zone</th><th>Task speed</th></tr></thead><tbody id="fleetBody"></tbody></table></div>
+      </div>
+
+      <div id="view-twin" class="view">
+        <div class="head">
+          <div><h1>3D Digital Twin</h1><p>Select a unit on the grid for live metrics</p></div>
+          <div class="head-actions">
+            <button class="btn sm" onclick="resetCam()">Reset view</button>
+            <button class="btn pri sm" onclick="boostMove()">Animate</button>
+          </div>
+        </div>
+        <div class="twin-layout">
+          <div class="scene-wrap">
+            <canvas id="c3d"></canvas>
+            <div class="scene-hint">industrial cell · drag · scroll · click robot</div>
+          </div>
+          <div class="inspector" id="inspector">
+            <div id="inspBody"><p style="color:var(--muted);font-size:13px">Select a robot on the twin.</p></div>
+          </div>
+        </div>
+        <div class="bottom-row">
+          <div class="card">
+            <h3 style="font-size:13px;margin-bottom:10px">Dependency Edges</h3>
+            <div id="depList"></div>
+          </div>
+          <div class="card">
+            <h3 style="font-size:13px;margin-bottom:10px">Cascade Impact</h3>
+            <div id="cascadeBox" style="color:var(--muted);font-size:13.5px;line-height:1.6">No active failures. Graph is in nominal state.<br>All units healthy. Migration paths idle.</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="view-plans" class="view">
+        <div class="head"><div><h1>Recovery Plans</h1><p>Read what each plan does before you activate it</p></div></div>
+        <div class="g g2" id="planGrid"></div>
+        <div class="card" style="margin-top:14px" id="suggestBox">
+          <h3 style="font-size:14px;margin-bottom:8px">Suggested plan</h3>
+          <p style="color:var(--muted);font-size:13.5px;margin-bottom:12px;line-height:1.55" id="suggestText">Based on current fleet state, pick a strategy below or use the interactive recommender.</p>
+          <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px">
+            <label style="font-size:12.5px;color:var(--muted)">Priority focus</label>
+            <select id="suggestFocus" onchange="updateSuggest()" style="padding:8px 10px;border-radius:8px;background:var(--bg);border:1px solid var(--border);color:var(--text)">
+              <option value="speed">Fastest recovery</option>
+              <option value="safe">Lowest disruption</option>
+              <option value="critical">Protect critical missions</option>
+              <option value="freeze">Stop cascade first</option>
+            </select>
+            <button class="btn pri sm" onclick="applySuggest()">Activate suggested</button>
+          </div>
+          <div id="suggestDetail" style="font-size:13px;color:var(--muted);line-height:1.6;padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--panel2)"></div>
+        </div>
+      </div>
+
+      
+      <div id="view-fpa" class="view">
+        <div class="head">
+          <div><h1>Failure Propagation Analysis</h1><p>Understand the trigger → dependency → overload → future-damage chain.</p></div>
+          <div class="head-actions"><button class="btn pri" onclick="document.querySelector('.nav button[data-v=plans]').click()">Open Recovery Plans</button></div>
+        </div>
+        <div class="card" style="margin-bottom:14px">
+          <h3 style="font-size:14px;margin-bottom:6px">How a failure propagates</h3>
+          <p style="color:var(--muted);font-size:13px;line-height:1.6">A robot failure is not isolated: unfinished jobs, shared resources and dependency edges can push work onto healthy units. Extra load raises queue time and resource contention; if a stressed unit crosses its health envelope, it can become the next failure point.</p>
+          <div class="fpa-flow">
+            <div class="fpa-node"><b>01 · Trigger</b>Battery, thermal, sensor, actuator or communication anomaly reduces usable capacity.</div>
+            <div class="fpa-node"><b>02 · Dependency</b>Jobs or resources waiting on the failed unit cannot complete on their original path.</div>
+            <div class="fpa-node"><b>03 · Overload</b>Backup robots inherit work, increasing load, queue pressure and recovery time.</div>
+            <div class="fpa-node"><b>04 · Future damage</b>Repeated overload can lower efficiency, delay missions and create secondary failures.</div>
+          </div>
+        </div>
+        <div class="fpa-interactive" style="margin-bottom:14px">
+          <div class="card">
+            <h3 style="font-size:14px;margin-bottom:8px">Interactive cascade scenario</h3>
+            <label style="font-size:12px;color:var(--muted)">Failure severity: <b id="severityVal" style="color:var(--text)">50%</b></label>
+            <input id="severitySlider" class="fpa-slider" type="range" min="0" max="100" value="50">
+            <div class="impact-meter"><i id="impactBar"></i></div>
+            <div id="fpaScenario" class="fpa-readout"></div>
+          </div>
+          <div class="card fpa-image-card">
+            <h3 style="font-size:14px;margin-bottom:8px">Failure propagation network</h3>
+            <img src="https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=900&h=520&fit=crop" alt="Network infrastructure representing robot dependencies" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1518770660439-4636190af475?w=900&h=520&fit=crop'">
+            <p>Visual reference: one failure can travel through connected dependencies, shift workloads and create secondary pressure across the fleet.</p>
+          </div>
+        </div>
+        <div class="fpa-observatory">
+          <div class="card risk-console">
+            <canvas id="riskNetworkCanvas"></canvas>
+            <div class="risk-ui">
+              <div class="risk-top">
+                <div><div class="risk-kicker">Cascade Risk Observatory</div><h3 style="font-size:16px;margin-top:5px">Live failure probability model</h3></div>
+                <div style="text-align:right"><div class="risk-prob" id="cascadeProbability">0%</div><small style="color:var(--muted)">estimated cascade risk</small></div>
+              </div>
+              <div class="risk-status"><i id="riskDot"></i><span id="riskStatus">Monitoring dependency network</span></div>
+              <div style="margin-top:14px;color:var(--muted);font-size:12px;max-width:560px" id="riskExplanation">The model combines trigger severity with current fleet stress to estimate the chance that one failure becomes a multi-robot cascade.</div>
+              <div class="risk-timeline" id="riskTimeline"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+              <div class="risk-stats">
+                <div class="risk-stat"><b id="riskAffected">0</b><span>exposed units</span></div>
+                <div class="risk-stat"><b id="riskDepth">0</b><span>cascade depth</span></div>
+                <div class="risk-stat"><b id="riskHeadroom">0%</b><span>fleet headroom</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="risk-insight">
+            <div class="insight-card"><h4>🧠 Why the probability moves</h4><p id="riskDrivers">Severity, active failures, low health, low battery and shared-zone concentration increase simulated cascade pressure.</p><div class="prob-legend"><span>0–29% local</span><span>30–59% watch</span><span>60–79% high</span><span>80%+ critical</span></div></div>
+            <div class="insight-card"><h4>🔮 4-step what-if horizon</h4><p id="riskHorizon">Trigger → dependency transfer → backup overload → secondary failure candidate.</p></div>
+            <div class="insight-card"><h4>🎮 Operator move</h4><p>Change the severity slider or inject a failure in Simulation Lab. The probability, network pulses and exposed-unit count update with the fleet state.</p><button class="btn pri" style="margin-top:10px" onclick="document.querySelector('.nav button[data-v=sim]').click()">Run live what-if →</button></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="view-sim" class="view">
+        <div class="head"><div><h1>Simulation Lab</h1><p>Replay fleet efficiency from baseline to the current failure state.</p></div></div>
+        <div class="sim-shell">
+          <div class="sim-chart">
+            <div class="sim-controls">
+              <label style="font-size:12px;color:var(--muted)">Focus</label>
+              <select id="simFocus"></select>
+              <button class="btn sm" onclick="setSimMode('all')">All robots</button>
+              <button class="btn sm" onclick="setSimMode('risk')">Risk only</button>
+              <button class="btn pri sm" onclick="playSim()">▶ Replay</button>
+              <button class="btn sm" onclick="pauseSim()">Ⅱ Pause</button>
+            </div>
+            <canvas id="effCanvas"></canvas><div id="simTooltip" class="sim-tooltip"></div>
+            <div class="sim-legend" id="simLegend"></div>
+            <div class="timeline"><i id="simTimeline"></i></div>
+          </div>
+          <div class="card">
+            <h3 style="margin-bottom:8px;font-size:14px">Simulation controls</h3>
+            <p style="color:var(--muted);font-size:12.5px;line-height:1.5;margin-bottom:10px">Click a robot to inject a failure. The graph recalculates its efficiency path and shows how dependent units can degrade over time.</p>
+            <div id="simBtns" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+            <div class="sim-mini">
+              <div class="metric"><div class="l">Current fleet</div><div class="v" id="simAvg">—</div></div>
+              <div class="metric"><div class="l">Cascade depth</div><div class="v" id="simDepth">0</div></div>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:12px"><button class="btn danger" onclick="emergency()">Emergency recovery</button><button class="btn" onclick="resetAll()">Reset</button></div>
+          </div>
+        </div>
+        <div class="card" style="margin-top:14px"><h3 style="margin-bottom:10px;font-size:14px">Event log</h3><div id="log" style="max-height:190px;overflow:auto;font-size:12.5px"></div></div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div class="modal-bg" id="addModal">
+  <div class="modal">
+    <h2>Add robot to fleet</h2>
+    <p class="sub">Enter a name and the task to assign. Unit gets the next id and appears in Command + Fleet + 3D twin.</p>
+    <div class="field"><label>Robot name *</label><input id="newRobotName" placeholder="e.g. Bay Runner" maxlength="24"></div>
+    <div class="field"><label>Task to assign *</label><input id="newRobotTask" placeholder="e.g. Night corridor sweep" maxlength="40"></div>
+    <div class="field"><label>Zone</label><input id="newRobotZone" placeholder="e.g. E1" maxlength="6" value="E1"></div>
+    <div class="row">
+      <button class="btn" style="flex:1" onclick="closeAddRobot()">Cancel</button>
+      <button class="btn pri" style="flex:1" onclick="confirmAddRobot()">Add unit</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toasts"></div>
+
+<script>
+const AUTH = { u: 'hackfusion', p: 'yoi time' };
+
+const robots = [
+  { id:'R-01', name:'Atlas Hauler', zone:'A1', health:96, battery:86, thermal:38, load:64, comms:88, task:'Warehouse Pick Route', capability:'pick · transport', role:'Warehouse picker',
+    img:'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=400&h=280&fit=crop',
+    causes:['Nominal'], survival:97, critical:['None'], replace:'R-04 hot spare', hist:[70,72,75,78,80,82,84,86,85,86,87,86,85,86,88,86,84,85,86,87,86,85,86,88,86,85,86,87,86,86] },
+  { id:'R-02', name:'Scout Runner', zone:'A2', health:92, battery:71, thermal:41, load:48, comms:91, task:'Corridor patrol north', capability:'scout · patrol', role:'Scout',
+    img:'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=400&h=280&fit=crop',
+    causes:['Mild congestion'], survival:93, critical:['Watch battery'], replace:'R-08', hist:[80,78,76,74,73,72,71,70,71,72,71,70,69,71,72,71,70,71,72,71,70,71,70,71,72,71,70,71,71,71] },
+  { id:'R-03', name:'Dock Lifter', zone:'B1', health:89, battery:64, thermal:47, load:55, comms:84, task:'Assist lift dock', capability:'lift · dock', role:'Lifter',
+    img:'https://images.unsplash.com/photo-1518314916381-77a37c2a49ae?w=400&h=280&fit=crop',
+    causes:['Actuator heat'], survival:88, critical:['Thermal check 30m'], replace:'R-07', hist:[75,74,72,70,68,66,65,64,63,64,65,64,63,64,65,64,63,64,64,63,64,65,64,63,64,64,63,64,64,64] },
+  { id:'R-04', name:'Corridor Guard', zone:'B2', health:97, battery:88, thermal:36, load:22, comms:95, task:'Corridor patrol', capability:'guard · patrol', role:'Guard',
+    img:'https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=400&h=280&fit=crop',
+    causes:['Healthy'], survival:98, critical:['None'], replace:'Primary spare', hist:[90,89,88,88,87,88,89,88,87,88,89,88,87,88,88,89,88,87,88,89,88,87,88,88,87,88,89,88,88,88] },
+  { id:'R-05', name:'Shelf Picker', zone:'C1', health:84, battery:51, thermal:52, load:61, comms:79, task:'Pick list C1-heavy', capability:'pick · slot', role:'Picker',
+    img:'https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?w=400&h=280&fit=crop',
+    causes:['Battery low','Gripper lag','Thermal tight'], survival:72, critical:['Charge swap','Reduce heavy picks'], replace:'R-01 · bay C', hist:[68,65,62,60,58,56,54,53,52,51,50,51,52,51,50,51,50,49,51,52,51,50,51,50,51,50,51,51,50,51] },
+  { id:'R-06', name:'Line Inspector', zone:'C2', health:81, battery:43, thermal:55, load:70, comms:72, task:'Lane-3 QC inspect', capability:'inspect · QC', role:'Inspector',
+    img:'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400&h=280&fit=crop',
+    causes:['High load','Battery critical','Sensor drift'], survival:61, critical:['Load shed','Recalibrate sensors'], replace:'Chassis 06-B', hist:[60,58,55,52,50,48,46,45,44,43,42,43,44,43,42,41,43,42,41,43,42,41,42,43,42,41,42,43,42,43] },
+  { id:'R-07', name:'Freight Mule', zone:'D1', health:94, battery:76, thermal:40, load:38, comms:90, task:'Dock transfer bay 3', capability:'haul · transfer', role:'Hauler',
+    img:'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=400&h=280&fit=crop',
+    causes:['Nominal'], survival:95, critical:['None'], replace:'Dock backup', hist:[82,80,79,78,77,76,75,76,77,76,75,76,77,76,75,76,76,75,76,77,76,75,76,76,75,76,77,76,76,76] },
+  { id:'R-08', name:'Night Patrol', zone:'D2', health:91, battery:69, thermal:39, load:45, comms:87, task:'Night perimeter D', capability:'patrol · secure', role:'Patrol',
+    img:'https://images.unsplash.com/photo-1546776310-eef45dd75d8c?w=400&h=280&fit=crop',
+    causes:['Duty peak'], survival:91, critical:['None'], replace:'Overlap R-02', hist:[78,76,74,72,71,70,69,68,69,70,69,68,69,70,69,68,69,70,69,68,69,69,68,69,70,69,68,69,69,69] },
+];
+
+let jobs = [
+  { id:'J-101', title:'Shelf restock A-12', robot:'R-01', progress:72 },
+  { id:'J-102', title:'Corridor patrol north', robot:'R-04', progress:41 },
+  { id:'J-103', title:'Dock transfer bay 3', robot:'R-07', progress:88 },
+  { id:'J-104', title:'Inventory scan B', robot:'R-02', progress:15 },
+  { id:'J-105', title:'Pick list C1-heavy', robot:'R-05', progress:56 },
+  { id:'J-106', title:'Lane-3 QC inspect', robot:'R-06', progress:38 },
+  { id:'J-107', title:'SKU slotting C1', robot:'R-05', progress:22 },
+  { id:'J-108', title:'Sensor sweep C2', robot:'R-06', progress:64 },
+  { id:'J-109', title:'Night perimeter D', robot:'R-08', progress:45 },
+  { id:'J-110', title:'Assist lift dock', robot:'R-03', progress:30 },
+];
+
+const failed = new Set([4, 5]);
+let migrated = 0, selected = 0;
+robots.forEach(r => { if (r.taskSpeed == null) r.taskSpeed = 1; });
+
+function st(i) {
+  if (failed.has(i)) return 'failed';
+  if (robots[i].health < 87 || robots[i].battery < 55) return 'risk';
+  return 'ok';
+}
+function surv(i) {
+  if (failed.has(i)) return 0;
+  let s = robots[i].survival;
+  if (robots[i].battery < 50) s -= 8;
+  if (robots[i].health < 85) s -= 6;
+  return Math.max(4, Math.min(99, s));
+}
+function jobsOf(id) { return jobs.filter(j => j.robot === id); }
+
+function toast(t, m) {
+  const e = document.createElement('div');
+  e.className = 'toast';
+  e.innerHTML = '<strong>' + t + '</strong>' + m;
+  toasts.appendChild(e);
+  setTimeout(() => e.remove(), 3000);
+}
+function log(t, b) {
+  const tm = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  document.getElementById('log').insertAdjacentHTML('afterbegin',
+    '<div style="margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid var(--border)"><span class="mono" style="color:var(--cyan)">' + tm + '</span><br><b>' + t + '</b><br><span style="color:var(--muted)">' + b + '</span></div>');
+}
+
+function goIntro() {
+  screenIntro.classList.add('on'); screenLogin.classList.remove('on'); screenApp.classList.remove('on');
+}
+function goLogin() {
+  screenIntro.classList.remove('on'); screenLogin.classList.add('on'); screenApp.classList.remove('on');
+  setTimeout(() => userIn.focus(), 80);
+}
+function enterApp() {
+  screenIntro.classList.remove('on'); screenLogin.classList.remove('on'); screenApp.classList.add('on');
+  sideUser.textContent = 'Operator · session active';
+  toast('Signed in', 'Console ready');
+  updateAll();
+  if (typeof onResize3D === 'function') setTimeout(onResize3D, 100);
+}
+function logout() { goIntro(); toast('Signed out', 'Session closed'); }
+
+btnLogin.onclick = () => {
+  loginErr.classList.remove('on');
+  const u = userIn.value.trim(), p = passIn.value;
+  if (!u || !p) { loginErr.textContent = 'Enter username and password.'; loginErr.classList.add('on'); return; }
+  if (u !== AUTH.u || p !== AUTH.p) { loginErr.textContent = 'Invalid credentials.'; loginErr.classList.add('on'); return; }
+  enterApp();
+};
+passIn.addEventListener('keydown', e => { if (e.key === 'Enter') btnLogin.click(); });
+
+function sendContact(e) {
+  e.preventDefault();
+  formOk.classList.add('on');
+  toast('Sent', 'Help desk notified');
+  e.target.reset();
+  return false;
+}
+addEventListener('scroll', () => topnav.classList.toggle('scrolled', scrollY > 16), { passive: true });
+addEventListener('resize', () => { if (typeof drawEfficiencyChart === 'function' && document.getElementById('view-sim')?.classList.contains('on')) drawEfficiencyChart(); });
+
+document.querySelectorAll('.nav button').forEach(b => {
+  b.onclick = () => {
+    document.querySelectorAll('.nav button').forEach(x => x.classList.remove('on'));
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('on'));
+    b.classList.add('on');
+    document.getElementById('view-' + b.dataset.v).classList.add('on');
+    if (b.dataset.v === 'twin' && typeof onResize3D === 'function') setTimeout(onResize3D, 40);
+    if (b.dataset.v === 'sim') setTimeout(() => { if (typeof drawEfficiencyChart === 'function') drawEfficiencyChart(); }, 60);
+    if (b.dataset.v === 'fpa') setTimeout(() => { if (typeof updateScenario === 'function') updateScenario(); }, 40);
+  };
+});
+
+function renderRobots() {
+  robotGrid.innerHTML = robots.map((r, i) => {
+    const s = st(i);
+    const cls = s === 'failed' ? 'st-bad' : s === 'risk' ? 'st-risk' : 'st-ok';
+    const lab = s === 'failed' ? 'offline' : s === 'risk' ? 'at risk' : 'healthy';
+    return `<div class="robot-card ${s} ${selected===i?'sel':''}" onclick="selectRobot(${i})">
+      <div class="robot-ph"><img src="${r.img}" alt="" loading="lazy" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1561557944-6e7860d1a7eb?w=400&h=280&fit=crop';this.parentElement.classList.add('img-fallback')"><span class="st ${cls}">${lab}</span></div>
+      <div class="robot-bd">
+        <div class="nm">${r.id} · ${r.name}</div>
+        <div class="mt">${r.zone} · ${surv(i)}% · ${jobsOf(r.id).length} jobs</div>
+        <div class="bar-lab"><span>Health</span><span>${r.health}%</span></div>
+        <div class="bar"><i class="${r.health<85?'lo':''}" style="width:${r.health}%"></i></div>
+        <div class="bar-lab"><span>Battery</span><span>${r.battery}%</span></div>
+        <div class="bar"><i class="${r.battery<50?'lo':''}" style="width:${r.battery}%"></i></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function selectRobot(i) {
+  selected = i;
+  renderRobots();
+  showDrawer(i);
+  showInspector(i);
+  if (typeof focusRobot3D === 'function') focusRobot3D(i);
+  if (typeof update3DColors === 'function') update3DColors();
+}
+
+function showInspector(i) {
+  const r = robots[i], s = st(i);
+  const badge = s === 'failed' ? 'bad' : s === 'risk' ? 'risk' : 'ok';
+  const badgeT = s === 'failed' ? 'OFFLINE' : s === 'risk' ? 'AT RISK' : 'HEALTHY';
+  let statusTitle = 'STATUS', statusBody = 'No active anomaly. Unit is within expected operating envelope.';
+  if (s === 'risk') { statusTitle = 'STATUS'; statusBody = r.critical.filter(c => c !== 'None').join(' · ') || r.causes.join(' · '); }
+  if (s === 'failed') { statusTitle = 'FAILURE'; statusBody = 'CRITICAL FAILURE — telemetry lost, unit offline, and recovery action required.'; }
+
+  inspBody.innerHTML = `
+    <div class="insp-badge ${badge}">${badgeT}</div>
+    <div style="font-size:20px;font-weight:700;margin-bottom:4px">${r.id}</div>
+    <div style="font-size:12.5px;color:var(--muted);margin-bottom:12px">${r.name}</div>
+    <div class="insp-status ${badge}"><strong>▲ ${statusTitle}</strong><span>${statusBody}</span></div>
+    <div class="metrics">
+      <div class="metric"><div class="l">Battery</div><div class="v">${r.battery}%</div><div class="mb"><i class="bat" style="width:${r.battery}%"></i></div></div>
+      <div class="metric"><div class="l">Thermal</div><div class="v">${r.thermal}°C</div><div class="mb"><i class="thm" style="width:${Math.min(100,r.thermal*1.5)}%"></i></div></div>
+      <div class="metric"><div class="l">Load</div><div class="v">${r.load}%</div><div class="mb"><i class="lod" style="width:${r.load}%"></i></div></div>
+      <div class="metric"><div class="l">Comms</div><div class="v">${r.comms}%</div><div class="mb"><i class="com" style="width:${r.comms}%"></i></div></div>
+    </div>
+    <div class="hist-title">Battery history · 30 min</div>
+    <div class="hist">${r.hist.map(h => '<span style="height:' + (h/100*36) + 'px"></span>').join('')}</div>
+    <div class="info-row"><span class="l">Assigned task</span><span class="v">${r.task}</span></div>
+    <div class="info-row"><span class="l">Capability</span><span class="v">${r.capability}</span></div>
+    <div class="info-row"><span class="l">Role</span><span class="v">${r.role}</span></div>
+    <div class="info-row"><span class="l">Survival</span><span class="v">${surv(i)}%</span></div>
+    <div class="info-row"><span class="l">Replacement</span><span class="v">${r.replace}</span></div>
+    <button class="focus-btn" onclick="focusRobot3D(${i})">◎ Focus unit</button>
+    ${s !== 'ok' ? `<button class="btn danger block" style="margin-top:8px" onclick="document.querySelector('.nav button[data-v=command]').click();selectRobot(${i})">Open full analysis</button>` : ''}`;
+}
+
+function showDrawer(i) {
+  const r = robots[i], s = st(i);
+  const myJobs = jobsOf(r.id);
+  const backups = robots.filter((x, j) => x.id !== r.id && st(j) === 'ok');
+  drawer.classList.add('on');
+  drawer.innerHTML = `
+    <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:14px">
+      <img src="${r.img}" style="width:88px;height:88px;object-fit:cover;border-radius:10px;border:1px solid var(--border)" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1561557944-6e7860d1a7eb?w=400&h=280&fit=crop';this.parentElement.classList.add('img-fallback')">
+      <div>
+        <div style="font-size:18px;font-weight:700">${r.id} — ${r.name}</div>
+        <div style="color:var(--muted);font-size:13px;margin-top:4px">Task: <b style="color:var(--text)">${r.task}</b></div>
+        <div style="margin-top:10px;display:flex;gap:8px">
+          ${s!=='failed'?`<button class="btn danger sm" onclick="failRobot(${i})">Mark offline</button>`:''}
+        </div>
+      </div>
+    </div>
+    <div class="g g3" style="margin-bottom:12px">
+      <div class="card"><h3>Health</h3><p>HP ${r.health}% · Bat ${r.battery}% · ${r.thermal}°C · Load ${r.load}%</p></div>
+      <div class="card"><h3>Critical</h3><p>${(s==='failed'?['Offline — replace']:r.critical).join(' · ')}</p></div>
+      <div class="card"><h3>Survival / replace</h3><p>${surv(i)}% · ${r.replace}</p></div>
+    </div>
+    <div class="assign-box">
+      <h4>Manual work assign — you choose backup</h4>
+      ${myJobs.length ? myJobs.map(j => `<div class="job-row"><label><input type="checkbox" class="jc" value="${j.id}" checked> <b>${j.id}</b> ${j.title}</label><span class="mono" style="color:var(--muted)">${j.progress}%</span></div>`).join('') : '<p style="color:var(--muted);font-size:13px">No jobs on this unit.</p>'}
+      <div class="assign-row">
+        <select id="bkSel">${backups.length ? backups.map(b => `<option value="${b.id}">${b.id} · ${b.name}</option>`).join('') : '<option value="">No healthy backup</option>'}</select>
+        <button class="btn pri" ${backups.length?'':'disabled'} onclick="assignWork('${r.id}')">Assign selected</button>
+      </div>
+    </div>`;
+}
+
+window.assignWork = function(fromId) {
+  const to = document.getElementById('bkSel')?.value;
+  if (!to) { toast('Pick backup', 'Select a healthy robot'); return; }
+  const ids = [...document.querySelectorAll('.jc:checked')].map(c => c.value);
+  if (!ids.length) { toast('Select jobs', 'Check at least one'); return; }
+  let n = 0;
+  jobs.forEach(j => { if (j.robot === fromId && ids.includes(j.id)) { j.robot = to; n++; } });
+  migrated += n;
+  log('Manual assign', n + ' job(s) ' + fromId + ' → ' + to);
+  toast('Assigned', n + ' job(s) → ' + to);
+  updateAll();
+  selectRobot(robots.findIndex(r => r.id === fromId));
+};
+
+function renderFleet() {
+  fleetBody.innerHTML = robots.map((r,i) => {
+    const s = st(i);
+    const sClass = s === 'risk' || s === 'failed' ? 'status-risk' : 'status-ok';
+    const spd = r.taskSpeed || 1;
+    const baseMin = 12;
+    const eta = Math.max(1, Math.round(baseMin / spd));
+    const prob = Math.min(99, Math.round(70 + spd * 12));
+    return `<tr class="${s !== 'ok' ? 'fleet-row-risk' : ''}">
+      <td style="cursor:pointer" onclick="selectRobot(${i});document.querySelector('.nav button[data-v=command]').click()"><b class="${s !== 'ok' ? 'fleet-risk-name' : ''}">${r.id}</b> <span class="${s !== 'ok' ? 'fleet-risk-name' : ''}">${r.name}</span></td>
+      <td class="${sClass}">${s.toUpperCase()}</td>
+      <td>${r.health}%</td><td>${r.battery}%</td>
+      <td>${r.task}</td><td>${r.zone}</td>
+      <td>
+        <div class="speed-ctrl">
+          <button class="btn sm" onclick="event.stopPropagation();setTaskSpeed(${i}, ${(spd-0.25).toFixed(2)})">−</button>
+          <input type="range" min="0.25" max="2.5" step="0.25" value="${spd}" oninput="setTaskSpeed(${i}, this.value)" onclick="event.stopPropagation()">
+          <button class="btn sm" onclick="event.stopPropagation();setTaskSpeed(${i}, ${(spd+0.25).toFixed(2)})">+</button>
+          <span class="eta">${spd}x · ~${eta}m · ${prob}% on-time</span>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+window.setTaskSpeed = function(i, v) {
+  v = Math.max(0.25, Math.min(2.5, parseFloat(v)));
+  robots[i].taskSpeed = Math.round(v * 100) / 100;
+  const eta = Math.max(1, Math.round(12 / robots[i].taskSpeed));
+  const prob = Math.min(99, Math.round(70 + robots[i].taskSpeed * 12));
+  log('Task speed', robots[i].id + ' → ' + robots[i].taskSpeed + 'x · ETA ~' + eta + 'm · ' + prob + '% on-time');
+  renderFleet();
+};
+function renderDeps() {
+  depList.innerHTML = [
+    ['R-01','TASK-A, RESOURCE'],['R-02','RESOURCE'],['RESOURCE','TASK-A, TASK-B, R-03'],
+    ['TASK-A','TASK-B'],['R-03','TASK-B']
+  ].map(([a,b]) => `<div class="dep-row"><span class="src">${a}</span><span style="color:var(--muted)">→ ${b}</span></div>`).join('');
+}
+const PLAN_DATA = [
+  { id:'min', t:'Minimal migration', e:'~1.2s',
+    d:'Moves only jobs that belong to offline units onto the nearest healthy backup. Other robots keep their current queues. Best when a single unit fails and you want the smallest change on the floor.',
+    steps:['Identify offline unit jobs','Pick nearest healthy backup','Transfer job tokens','Resume queues'] },
+  { id:'full', t:'Full rebalance', e:'~2.4s',
+    d:'Redistributes all active work across every healthy robot by load. Use when several units are stressed or after a cascade so no single unit stays overloaded.',
+    steps:['Score healthy capacity','Split open jobs','Assign by lowest load','Verify completion windows'] },
+  { id:'crit', t:'Critical shield', e:'~1.8s',
+    d:'Locks priority missions on the strongest healthy units and parks non-critical tasks. Implements only after you confirm which missions are critical.',
+    steps:['Tag critical missions','Pin to top-health units','Park non-critical jobs','Notify operator'] },
+  { id:'freeze', t:'Cascade freeze', e:'~0.8s',
+    d:'Immediately pauses non-critical dependency chains so failure cannot spread. Does not move jobs until you unfreeze or pick another plan.',
+    steps:['Halt non-critical edges','Hold dependent tasks','Keep critical paths warm','Await operator plan'] },
+];
+function renderPlans() {
+  const planStyle={min:['#4dd0e1','M'],full:['#8b7cff','R'],crit:['#ffca5c','C'],freeze:['#ff6b6b','F']};
+  planGrid.innerHTML = PLAN_DATA.map(p => { const [accent,icon]=planStyle[p.id]||['#aaa','P']; return `
+    <div class="card plan-card" style="--plan-accent:${accent}">
+      <div class="plan-icon">${icon}</div>
+      <h3 style="margin-bottom:8px">${p.t}</h3>
+      <div class="plan-accent-line"></div>
+      <p style="color:var(--muted);font-size:14px;line-height:1.55;margin-bottom:10px">${p.d}</p>
+      <div style="font-size:13px;color:var(--dim);margin-bottom:12px"><b style="color:var(--text)">Before implement:</b> ${p.steps.join(' → ')}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span class="mono" style="color:${accent};font-size:13px">ETA ${p.e}</span>
+        <button class="btn pri sm" style="border-color:${accent};color:${accent}" onclick="toast('Plan armed','${p.t}');log('Plan','${p.t} armed')">Activate</button>
+      </div>
+    </div>`; }).join('');
+  updateSuggest();
+}
+window.updateSuggest = function() {
+  const focus = document.getElementById('suggestFocus')?.value || 'safe';
+  const map = { speed:'freeze', safe:'min', critical:'crit', freeze:'freeze' };
+  const failedN = failed.size;
+  const riskN = robots.filter((_,i)=>st(i)==='risk').length;
+  let pick = map[focus];
+  if (failedN >= 2) pick = focus === 'safe' ? 'full' : pick;
+  if (failedN === 0 && riskN === 0) pick = 'min';
+  const p = PLAN_DATA.find(x => x.id === pick) || PLAN_DATA[0];
+  window.__suggestId = p.id;
+  const stLine = failedN ? (failedN + ' offline, ' + riskN + ' at risk') : (riskN + ' at risk, fleet otherwise nominal');
+  const el = document.getElementById('suggestDetail');
+  const tx = document.getElementById('suggestText');
+  if (tx) tx.textContent = 'Live recommendation for current state (' + stLine + '). Adjust priority focus to change the suggestion.';
+  if (el) el.innerHTML = '<b style="color:var(--cyan)">' + p.t + '</b> · ETA ' + p.e + '<br><br>' + p.d + '<br><br><b style="color:var(--text)">Steps:</b> ' + p.steps.join(' → ');
+};
+window.applySuggest = function() {
+  const p = PLAN_DATA.find(x => x.id === window.__suggestId) || PLAN_DATA[0];
+  toast('Suggested plan', p.t + ' activated');
+  log('Suggested plan', p.t);
+};
+function renderFPA() {
+  const box = document.getElementById('fpaCauses');
+  const sev = +(document.getElementById('severitySlider')?.value || 50);
+  const active = robots.map((r,i)=>({r,i,s:st(i)})).filter(x=>x.s!=='ok');
+  const pool = active.length ? active : robots.slice(0,4).map((r,i)=>({r,i,s:'nominal'}));
+  if (box) {
+    box.innerHTML = pool.slice(0,4).map(({r,i,s},idx) => {
+      const causes = s === 'failed' ? ['Telemetry lost','Health collapse','Tasks interrupted'] : (r.causes||['Load spike','Dependency pressure','Resource contention']);
+      const img = r.img || 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=180&h=110&fit=crop';
+      const level = s==='failed' ? 'Primary trigger' : s==='risk' ? 'Secondary exposure' : 'Baseline monitor';
+      return `<div class="root-cause-visual">
+        <img src="${img}" alt="${r.name}" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=180&h=110&fit=crop'">
+        <div><b>${r.id} · ${r.name}</b><span>${level} · ${causes.slice(0,3).join(' · ')}</span><span>Path: trigger → dependency load → queue transfer → efficiency change</span></div>
+      </div>`;
+    }).join('');
+  }
+  const riskZones = {};
+  robots.forEach((r,i)=>{if(st(i)!=='ok')riskZones[r.zone]=(riskZones[r.zone]||0)+1;});
+  const batt = robots.filter(r=>r.battery<55).length;
+  const pattern = document.getElementById('fpaPattern');
+  if(pattern) pattern.innerHTML = (Object.keys(riskZones).length
+    ? 'Concentration: '+Object.entries(riskZones).map(([z,c])=>z+' ('+c+')').join(', ')+'.'
+    : 'No current zone concentration.')
+    + '<br><br>' + (batt ? batt+' unit(s) below 55% battery; staggered charging can reduce shared power-cycle pressure.' : 'Battery levels do not currently show a shared low-power pattern.')
+    + '<br><br><b style="color:var(--text)">Root-cause chain:</b> '+(active.length?'active failure → dependency loss → queue transfer → load increase → efficiency decline.':'no active failure → nominal dependencies → normal queue flow.');
+  updateScenario();
+}
+
+let simMode='all', simFrame=30, simTimer=null;
+const simPalette=['#4dd0e1','#8b7cff','#ffca5c','#ff6b6b','#66e3a4','#ff8bd1','#7aa7ff','#b6e35a'];
+function efficiencySeries(i){
+  const r=robots[i], s=st(i);
+  const raw=Array.isArray(r.hist)&&r.hist.length ? r.hist.slice(-30).map(Number) : [];
+  const base=raw.length ? raw : Array.from({length:30},()=>Number(r.health)||0);
+  const target=Math.max(5,Math.min(100,Number(r.health)||0));
+  let pts=base.map(v=>Math.max(5,Math.min(100,v)));
+  // The stored telemetry history is the baseline. The final point is the live value.
+  if(s==='failed'){
+    const from=pts[Math.max(0,pts.length-7)]||target;
+    const n=Math.max(1,pts.length-1);
+    for(let j=Math.max(0,pts.length-6);j<pts.length;j++){
+      const q=(j-(pts.length-6))/5;
+      pts[j]=from+(target-from)*q;
+    }
+  } else if(s==='risk'){
+    const last=pts[pts.length-1]||target;
+    for(let j=Math.max(0,pts.length-5);j<pts.length;j++){
+      const q=(j-(pts.length-5))/4;
+      pts[j]=last+(target-last)*q;
+    }
+  }
+  pts.push(target);
+  return pts.map(v=>Math.max(5,Math.min(100,Math.round(v*10)/10)));
+}
+function drawEfficiencyChart(){
+  const c=document.getElementById('effCanvas'); if(!c) return;
+  const rect=c.getBoundingClientRect();
+  const w=Math.max(320, rect.width || c.parentElement?.clientWidth || 720), h=340;
+  const dpr=Math.min(window.devicePixelRatio||1,2);
+  c.width=Math.round(w*dpr); c.height=Math.round(h*dpr); c.style.width='100%'; c.style.height=h+'px';
+  const ctx=c.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,w,h);
+  ctx.font='11px Inter, sans-serif';
+  const pad={l:48,r:18,t:20,b:38}, cw=w-pad.l-pad.r, ch=h-pad.t-pad.b;
+  ctx.strokeStyle='rgba(190,190,190,.18)'; ctx.fillStyle='#b8b8b8'; ctx.lineWidth=1;
+  for(let y=0;y<=100;y+=20){const py=pad.t+ch-(y/100)*ch;ctx.beginPath();ctx.moveTo(pad.l,py);ctx.lineTo(w-pad.r,py);ctx.stroke();ctx.fillText(y+'%',8,py+4)}
+  for(let k=0;k<=30;k+=5){const x=pad.l+(k/30)*cw;ctx.strokeStyle='rgba(190,190,190,.10)';ctx.beginPath();ctx.moveTo(x,pad.t);ctx.lineTo(x,pad.t+ch);ctx.stroke();ctx.fillStyle='#b8b8b8';ctx.fillText('T+'+k,x-10,h-11)}
+  const selectedId=document.getElementById('simFocus')?.value||'all';
+  const shown=robots.map((r,i)=>({r,i})).filter(({i})=>simMode==='risk'?st(i)!=='ok':selectedId==='all'||robots[i].id===selectedId);
+  const legend=document.getElementById('simLegend');
+  if(legend) legend.innerHTML=shown.map(({r,i})=>`<span><i style="background:${simPalette[i%simPalette.length]}"></i>${r.id}</span>`).join('');
+  shown.forEach(({r,i})=>{
+    const pts=efficiencySeries(i), color=simPalette[i%simPalette.length];
+    ctx.strokeStyle=color; ctx.lineWidth=(selectedId===r.id?3:1.8); ctx.globalAlpha=selectedId==='all'?0.82:1;
+    ctx.beginPath(); pts.forEach((v,k)=>{const x=pad.l+(k/30)*cw,y=pad.t+ch-(v/100)*ch;k?ctx.lineTo(x,y):ctx.moveTo(x,y)}); ctx.stroke();
+    const k=Math.max(0,Math.min(30,simFrame)), x=pad.l+(k/30)*cw, y=pad.t+ch-(pts[k]/100)*ch;
+    ctx.globalAlpha=1; ctx.fillStyle=color; ctx.beginPath();ctx.arc(x,y,4,0,Math.PI*2);ctx.fill();
+  });
+  const fx=pad.l+(Math.max(0,Math.min(30,simFrame))/30)*cw;ctx.strokeStyle='rgba(255,255,255,.5)';ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(fx,pad.t);ctx.lineTo(fx,pad.t+ch);ctx.stroke();ctx.setLineDash([]);
+  const avg=shown.length?Math.round(shown.reduce((a,{i})=>a+efficiencySeries(i)[Math.max(0,Math.min(30,simFrame))],0)/shown.length):0;
+  const av=document.getElementById('simAvg');if(av)av.textContent=avg+'%';
+  const tl=document.getElementById('simTimeline');if(tl)tl.style.width=(Math.max(0,Math.min(30,simFrame))/30*100)+'%';
+  const depth=document.getElementById('simDepth');if(depth)depth.textContent=failed.size?Math.min(5,failed.size+1):0;
+}
+function initSimInteraction(){
+  const c=document.getElementById('effCanvas'), tip=document.getElementById('simTooltip');
+  if(!c||!tip||c.dataset.bound)return; c.dataset.bound='1';
+  c.addEventListener('pointermove',e=>{
+    const rect=c.getBoundingClientRect(), padL=48, padR=18, plotW=Math.max(1,rect.width-padL-padR);
+    const x=e.clientX-rect.left, k=Math.max(0,Math.min(30,Math.round(((x-padL)/plotW)*30)));
+    const id=document.getElementById('simFocus')?.value||'all';
+    const shown=robots.map((r,i)=>({r,i})).filter(({i})=>simMode==='risk'?st(i)!=='ok':id==='all'||robots[i].id===id);
+    if(!shown.length){tip.style.display='none';return;}
+    const vals=shown.map(({r,i})=>({r,i,v:Math.round(efficiencySeries(i)[k])}));
+    const selected=shown.find(x=>x.r.id===id) || vals[0];
+    const best=id!=='all' ? vals.find(x=>x.r.id===id) : vals.reduce((a,b)=>Math.abs(b.v-50)<Math.abs(a.v-50)?b:a,vals[0]);
+    tip.innerHTML='<b>'+best.r.id+' · '+best.r.name+'</b><br>Time: T+'+k+'<br>Efficiency: '+best.v+'%';
+    tip.style.display='block';tip.style.left=Math.min(rect.width-155,Math.max(8,x+10))+'px';tip.style.top='48px';
+  });
+  c.addEventListener('pointerleave',()=>tip.style.display='none');
+}
+function setupSimFocus(){const sel=document.getElementById('simFocus');if(!sel)return;sel.innerHTML='<option value="all">All robots</option>'+robots.map(r=>`<option value="${r.id}">${r.id} · ${r.name}</option>`).join('');sel.onchange=()=>{simMode='all';drawEfficiencyChart()}}
+window.setSimMode=m=>{simMode=m;drawEfficiencyChart()};
+window.playSim=()=>{clearInterval(simTimer);simTimer=setInterval(()=>{simFrame++;if(simFrame>30){clearInterval(simTimer);simTimer=null;simFrame=30}drawEfficiencyChart()},130);toast('Replay','Efficiency history is moving from baseline to present')};
+window.pauseSim=()=>{clearInterval(simTimer);simTimer=null};
+function renderEffCharts(){setupSimFocus();initSimInteraction();requestAnimationFrame(()=>drawEfficiencyChart())}
+window.addEventListener('resize',()=>{if(document.getElementById('view-sim')?.classList.contains('on')) drawEfficiencyChart()});
+function renderSim(){simBtns.innerHTML=robots.map((r,i)=>`<button class="btn sm ${failed.has(i)?'danger':''}" onclick="failRobot(${i})">${failed.has(i)?'✓ ':''}Fail ${r.id}</button>`).join('');drawEfficiencyChart();}
+
+function updateScenario(){
+  const sl=document.getElementById('severitySlider');if(!sl)return;const sev=+sl.value;const active=failed.size;
+  const riskUnits=robots.filter((r,i)=>st(i)!=='ok').length;
+  const lowHealth=robots.filter(r=>Number(r.health)<60).length;
+  const lowBattery=robots.filter(r=>Number(r.battery)<55).length;
+  const zones={};robots.forEach((r,i)=>{if(st(i)!=='ok')zones[r.zone]=(zones[r.zone]||0)+1;});
+  const concentration=Math.max(0,...Object.values(zones));
+  const avgHealth=robots.reduce((a,r)=>a+Number(r.health||0),0)/Math.max(1,robots.length);
+  const propagation=Math.min(100,Math.round(sev*.52+active*16+lowHealth*3+lowBattery*2+Math.max(0,concentration-1)*5));
+  const probability=Math.min(96,Math.max(2,Math.round(propagation*.78 + (100-avgHealth)*.12)));
+  const sv=document.getElementById('severityVal'),bar=document.getElementById('impactBar'),sc=document.getElementById('fpaScenario');
+  if(sv)sv.textContent=sev+'%';if(bar)bar.style.width=propagation+'%';
+  const depth=Math.max(active?2:1,Math.min(5,1+Math.ceil(propagation/25)));const depthEl=document.getElementById('simDepth');if(depthEl)depthEl.textContent=active?depth:0;
+  if(sc)sc.innerHTML=`At <b style="color:var(--text)">${sev}% trigger severity</b>, the simulated propagation index is <b style="color:var(--cyan)">${propagation}%</b>. The model estimates a <b style="color:var(--text)">${probability}% cascade probability</b> under the current fleet state. ${propagation<30?'Most impact stays local; dependencies have recovery capacity.':propagation<65?'Dependent jobs begin moving to backups, increasing queue pressure and reducing efficiency on shared resources.':'A broad cascade becomes plausible in the model: delayed jobs can overload backups, lower throughput and create secondary failure candidates.'}<br><br><b style="color:var(--text)">Damage path:</b> trigger → lost capacity → reassignment → overload → slower completion → possible secondary failures.`;
+  updateRiskObservatory({sev,active,riskUnits,lowHealth,lowBattery,concentration,avgHealth,propagation,probability,depth});
+}
+function updateRiskObservatory(m){
+  const p=document.getElementById('cascadeProbability');if(p)p.textContent=m.probability+'%';
+  const status=document.getElementById('riskStatus'),dot=document.getElementById('riskDot');
+  const label=m.probability>=80?'CRITICAL · cascade conditions detected':m.probability>=60?'HIGH · dependencies under pressure':m.probability>=30?'WATCH · propagation possible':'LOCAL · recovery headroom available';
+  if(status)status.textContent=label;
+  if(dot){dot.style.background=m.probability>=80?'#ff4d4d':m.probability>=60?'#ffca5c':m.probability>=30?'#8b7cff':'#66e3a4';dot.style.color=dot.style.background;}
+  const e=document.getElementById('riskExplanation');if(e)e.textContent=`This is a simulated probability, not a measured real-world probability. It combines ${m.sev}% trigger severity, ${m.riskUnits} exposed unit(s), ${m.lowHealth} low-health unit(s), ${m.lowBattery} low-battery unit(s), and dependency concentration.`;
+  const aff=document.getElementById('riskAffected');if(aff)aff.textContent=m.riskUnits;
+  const dep=document.getElementById('riskDepth');if(dep)dep.textContent=m.active?m.depth:0;
+  const head=document.getElementById('riskHeadroom');if(head)head.textContent=Math.max(0,Math.round(m.avgHealth))+'%';
+  const drv=document.getElementById('riskDrivers');if(drv)drv.textContent=`Main drivers: severity ${m.sev}%, active failures ${m.active}, low health ${m.lowHealth}, low battery ${m.lowBattery}, zone concentration ${m.concentration}.`;
+  const hor=document.getElementById('riskHorizon');if(hor)hor.textContent=m.probability>=80?'Trigger → dependency transfer → backup overload → secondary failure candidate.':m.probability>=50?'Trigger → dependency transfer → queue pressure → possible secondary failure.':'Trigger → local containment → workload rebalance → recovery window.';
+  const spans=document.querySelectorAll('#riskTimeline span');spans.forEach((x,i)=>x.classList.toggle('on',i<Math.ceil(m.probability/12.5)));
+  drawRiskNetwork(m.probability);
+}
+function drawRiskNetwork(prob){
+  const c=document.getElementById('riskNetworkCanvas');if(!c)return;const rect=c.getBoundingClientRect();const dpr=Math.min(devicePixelRatio||1,2),w=Math.max(300,rect.width),h=Math.max(260,rect.height);c.width=w*dpr;c.height=h*dpr;const x=c.getContext('2d');x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,w,h);
+  const pts=[];for(let i=0;i<10;i++){const a=(Math.PI*2*i/10)-Math.PI/2;const rr=Math.min(w,h)*.29;pts.push({x:w/2+Math.cos(a)*rr,y:h*.52+Math.sin(a)*rr});}
+  x.lineWidth=1;for(let i=0;i<pts.length;i++){for(let j=i+1;j<pts.length;j++){const d=Math.hypot(pts[i].x-pts[j].x,pts[i].y-pts[j].y);if(d<rrSafe(w,h)){x.strokeStyle=`rgba(77,208,225,${Math.max(.04,.18-d/900)})`;x.beginPath();x.moveTo(pts[i].x,pts[i].y);x.lineTo(pts[j].x,pts[j].y);x.stroke();}}}
+  const pulse=4+Math.sin(Date.now()/260)*1.5;x.fillStyle=prob>79?'#ff4d4d':prob>59?'#ffca5c':'#4dd0e1';x.shadowBlur=18;x.shadowColor=x.fillStyle;x.beginPath();x.arc(w/2,h*.52,10+pulse,0,Math.PI*2);x.fill();x.shadowBlur=0;
+  pts.forEach((p,i)=>{x.fillStyle=i<Math.ceil(prob/10)?'rgba(255,255,255,.9)':'rgba(130,130,130,.35)';x.beginPath();x.arc(p.x,p.y,i<Math.ceil(prob/10)?4:2.5,0,Math.PI*2);x.fill();});
+  if(document.getElementById('riskNetworkCanvas'))requestAnimationFrame(()=>{if(document.getElementById('view-fpa')?.classList.contains('on'))drawRiskNetwork(prob);});
+}
+function rrSafe(w,h){return Math.min(w,h)*.65}
+function initFPAControls(){const sl=document.getElementById('severitySlider');if(sl)sl.oninput=updateScenario;updateScenario()}
+
+function updateKPIs() {
+  const total = robots.length;
+  const on = total - failed.size;
+  kOn.textContent = on; kOnT.textContent = 'of ' + total;
+  kRisk.textContent = robots.filter((_,i)=>st(i)==='risk').length + failed.size;
+  kMig.textContent = migrated;
+  kSurv.textContent = Math.round(robots.reduce((a,_,i)=>a+surv(i),0)/robots.length) + '%';
+  kComp.textContent = Math.max(76, 98 - failed.size * 4) + '%';
+  alert.classList.toggle('on', failed.size > 0);
+  if (failed.size === 0) {
+    cascadeBox.innerHTML = 'No active failures. Graph is in nominal state.<br>All units healthy. Migration paths idle.';
+  } else {
+    cascadeBox.innerHTML = '<strong style="color:var(--red)">Active:</strong> ' + [...failed].map(i=>robots[i].id).join(', ') +
+      '<br>Cascade depth: ' + (failed.size >= 2 ? 3 : 2) + ' · Use manual assign on unit cards.';
+  }
+}
+function updateAll() {
+  renderRobots(); renderFleet(); renderSim(); updateKPIs();
+  showDrawer(selected); showInspector(selected);
+  renderFPA(); renderEffCharts(); initFPAControls();
+  if (typeof updateSuggest === 'function') updateSuggest();
+  if (typeof update3DColors === 'function') update3DColors();
+}
+
+window.failRobot = function(i) {
+  if (failed.has(i)) return;
+  failed.add(i); robots[i].health = Math.min(robots[i].health, 15);
+  log(robots[i].id + ' offline', 'Failure injected');
+  toast(robots[i].id + ' offline', 'Assign work from unit panel');
+  updateAll();
+};
+window.emergency = function() {
+  if (!failed.size) { toast('Clear', 'No offline units'); return; }
+  const n = failed.size; migrated += n * 2; failed.clear();
+  robots.forEach((r,i) => r.health = [96,92,89,97,84,81,94,91][i]);
+  log('Emergency recovery', n + ' restored');
+  toast('Recovered', n + ' units online');
+  updateAll();
+};
+window.resetAll = function() {
+  failed.clear(); migrated = 0;
+  robots.forEach((r,i) => {
+    r.health = [96,92,89,97,84,81,94,91][i];
+    r.battery = [86,71,64,88,51,43,76,69][i];
+  });
+  log('Reset', 'Baseline');
+  toast('Reset', 'Fleet baseline');
+  updateAll();
+};
+
+
+window.openAddRobot = function() {
+  const m = document.getElementById('addModal');
+  if (!m) { toast('Error', 'Add form missing'); return; }
+  m.classList.add('on');
+  const n = document.getElementById('newRobotName');
+  const z = document.getElementById('newRobotZone');
+  const t = document.getElementById('newRobotTask');
+  if (n) { n.value = ''; setTimeout(() => n.focus(), 50); }
+  if (z) z.value = 'E1';
+  if (t) t.value = '';
+};
+window.closeAddRobot = function() {
+  document.getElementById('addModal')?.classList.remove('on');
+};
+window.confirmAddRobot = function() {
+  const name = (document.getElementById('newRobotName')?.value || '').trim();
+  if (!name) { toast('Name required', 'Enter a robot name'); return; }
+  const zone = ((document.getElementById('newRobotZone')?.value) || 'E1').trim().toUpperCase() || 'E1';
+  const task = ((document.getElementById('newRobotTask')?.value) || '').trim() || 'Custom assignment';
+  const n = robots.length + 1;
+  const id = 'R-' + String(n).padStart(2, '0');
+  const imgs = [
+    'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=400&h=280&fit=crop',
+    'https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=400&h=280&fit=crop',
+    'https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?w=400&h=280&fit=crop',
+    'https://images.unsplash.com/photo-1561557944-6e7860d1a7eb?w=400&h=280&fit=crop',
+    'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=400&h=280&fit=crop',
+    'https://images.unsplash.com/photo-1546776310-eef45dd75d8c?w=400&h=280&fit=crop'
+  ];
+  robots.push({
+    id, name, zone,
+    health: 95, battery: 92, thermal: 36, load: 18, comms: 96,
+    task, capability: 'custom · assigned', role: name,
+    img: imgs[(n - 1) % imgs.length],
+    taskSpeed: 1,
+    causes: ['Newly commissioned — nominal'],
+    survival: 96, critical: ['None'], replace: 'Assign spare later',
+    hist: Array.from({length: 30}, () => 88 + Math.floor(Math.random() * 8))
+  });
+  jobs.push({ id: 'J-' + (200 + n), title: task, robot: id, progress: 5 });
+  closeAddRobot();
+  selected = robots.length - 1;
+  updateAll();
+  if (typeof spawnRobot3D === 'function') {
+    try { spawnRobot3D(robots.length - 1); } catch (err) { console.warn(err); }
+  }
+  log('Unit added', id + ' · ' + name + ' · task: ' + task);
+  toast('Added to fleet', id + ' — ' + name);
+  document.querySelector('.nav button[data-v=command]')?.click();
+};
+
+renderDeps(); renderPlans();
+log('Ready', 'Awaiting sign-in');
+
+/* particles + meteors + hero network + cursor */
+(function(){
+  const c = document.getElementById('particles');
+  const ctx = c.getContext('2d');
+  let w, h, mx = 0.5, my = 0.5, tmx = 0.5, tmy = 0.5;
+  const pts = Array.from({length: 70}, () => ({
+    x: Math.random(), y: Math.random(),
+    vx: (Math.random()-.5)*.00035, vy: (Math.random()-.5)*.00035,
+    r: 1 + Math.random() * 1.2
+  }));
+  function resize(){ w=c.width=innerWidth; h=c.height=innerHeight; }
+  function frame(){
+    mx += (tmx - mx) * 0.04;
+    my += (tmy - my) * 0.04;
+    ctx.clearRect(0,0,w,h);
+    // subtle vignette fill so trails soft
+    ctx.fillStyle = 'rgba(0,0,0,.22)';
+    ctx.fillRect(0,0,w,h);
+    // parallax offset from cursor
+    const ox = (mx - 0.5) * 40;
+    const oy = (my - 0.5) * 30;
+    pts.forEach(p => {
+      p.x += p.vx + (mx - 0.5) * 0.00002;
+      p.y += p.vy + (my - 0.5) * 0.00002;
+      if (p.x < 0 || p.x > 1) p.vx *= -1;
+      if (p.y < 0 || p.y > 1) p.vy *= -1;
+    });
+    for (let i = 0; i < pts.length; i++) {
+      for (let j = i + 1; j < pts.length; j++) {
+        const a = pts[i], b = pts[j];
+        const dx = (a.x - b.x) * w, dy = (a.y - b.y) * h;
+        const d = Math.hypot(dx, dy);
+        if (d < 150) {
+          ctx.strokeStyle = `rgba(53,215,255,${0.1 * (1 - d / 150)})`;
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(a.x * w + ox * a.x, a.y * h + oy * a.y);
+          ctx.lineTo(b.x * w + ox * b.x, b.y * h + oy * b.y);
+          ctx.stroke();
+        }
+      }
+    }
+    pts.forEach(p => {
+      const px = p.x * w + ox * p.x;
+      const py = p.y * h + oy * p.y;
+      ctx.fillStyle = 'rgba(255,255,255,.55)';
+      ctx.beginPath();
+      ctx.arc(px, py, p.r, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    // soft cursor glow
+    const grd = ctx.createRadialGradient(mx * w, my * h, 0, mx * w, my * h, 180);
+    grd.addColorStop(0, 'rgba(255,255,255,.06)');
+    grd.addColorStop(1, 'transparent');
+    ctx.fillStyle = grd;
+    ctx.fillRect(0, 0, w, h);
+    requestAnimationFrame(frame);
+  }
+  addEventListener('mousemove', e => {
+    tmx = e.clientX / innerWidth;
+    tmy = e.clientY / innerHeight;
+  }, { passive: true });
+  addEventListener('resize', resize);
+  resize(); frame();
+
+  /* meteors */
+  const host = document.getElementById('meteors');
+  function spawnMeteor() {
+    const m=document.createElement('div');m.className='meteor';
+    const y=5+Math.random()*62; m.style.setProperty('--start-y',y+'vh');m.style.setProperty('--end-y',(y+42+Math.random()*18)+'vh');
+    m.style.animationDuration=(1.8+Math.random()*1.7)+'s';m.style.animationDelay=(Math.random()*.4)+'s';host.appendChild(m);
+    m.addEventListener('animationend',()=>m.remove(),{once:true});
+  }
+  for(let i=0;i<3;i++) setTimeout(spawnMeteor,i*900);
+  setInterval(()=>{if(document.visibilityState==='visible')spawnMeteor()},2600);
+
+  /* hero network brain-like mesh */
+  const heroNet = document.getElementById('heroNet');
+  if (heroNet) {
+    const hc = document.createElement('canvas');
+    heroNet.appendChild(hc);
+    const hctx = hc.getContext('2d');
+    let hw, hh;
+    const nodes = [];
+    function buildNodes() {
+      nodes.length = 0;
+      // Symmetric brain-shaped constellation: two lobes, a central cleft and organic outer contour.
+      for (let i = 0; i < 170; i++) {
+        const side = i % 2 === 0 ? -1 : 1;
+        const u = Math.random();
+        const v = Math.random();
+        const x = side * (0.07 + u * 0.28);
+        const lobe = Math.sqrt(Math.max(0, 1 - Math.pow((u - .35) / .72, 2)));
+        const y = (v - .5) * .62 * lobe;
+        const ripple = Math.sin((u*5 + v*3) * Math.PI) * .018;
+        nodes.push({x:.5+x, y:.48+y+ripple, ox:.5+x, oy:.48+y+ripple, phase:Math.random()*Math.PI*2});
+      }
+      // Add a few nodes around the lower brain stem.
+      for(let i=0;i<20;i++){
+        const x=.5+(Math.random()-.5)*.14, y=.78+Math.random()*.09;
+        nodes.push({x,y,ox:x,oy:y,phase:Math.random()*Math.PI*2});
+      }
+    }
+    function hresize() {
+      hw = heroNet.clientWidth;
+      hh = heroNet.clientHeight;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      hc.width = Math.max(1, Math.round(hw*dpr));
+      hc.height = Math.max(1, Math.round(hh*dpr));
+      hc.style.width = hw+'px'; hc.style.height = hh+'px';
+      hctx.setTransform(dpr,0,0,dpr,0,0);
+      buildNodes();
+    }
+    let ht = 0;
+    function hframe() {
+      ht += 0.016;
+      hctx.clearRect(0, 0, hw, hh);
+      const cox = (tmx - 0.5) * 50;
+      const coy = (tmy - 0.5) * 40;
+      hctx.save(); hctx.strokeStyle='rgba(255,255,255,.22)'; hctx.lineWidth=1; hctx.beginPath(); hctx.moveTo(hw*.5,hh*.20); hctx.bezierCurveTo(hw*.47,hh*.34,hw*.54,hh*.43,hw*.49,hh*.57); hctx.bezierCurveTo(hw*.46,hh*.67,hw*.54,hh*.73,hw*.5,hh*.79); hctx.stroke(); hctx.restore();
+            nodes.forEach(n => {
+        n.x = n.ox + Math.sin(ht + n.phase) * 0.008 + (tmx - 0.5) * 0.02;
+        n.y = n.oy + Math.cos(ht * 0.9 + n.phase) * 0.008 + (tmy - 0.5) * 0.015;
+      });
+      for (let i = 0; i < nodes.length; i++) {
+        for (let j = i + 1; j < nodes.length; j++) {
+          const a = nodes[i], b = nodes[j];
+          const dx = (a.x - b.x) * hw, dy = (a.y - b.y) * hh;
+          const d = Math.hypot(dx, dy);
+          if (d < 115) {
+            hctx.strokeStyle = `rgba(255,255,255,${0.48 * (1 - d / 115)})`; hctx.lineWidth = 1.15;
+            hctx.beginPath();
+            hctx.moveTo(a.x * hw + cox * 0.3, a.y * hh + coy * 0.3);
+            hctx.lineTo(b.x * hw + cox * 0.3, b.y * hh + coy * 0.3);
+            hctx.stroke();
+          }
+        }
+      }
+      nodes.forEach(n => {
+        const pulse = 0.5 + 0.5*Math.sin(ht*2.2+n.phase);
+        hctx.fillStyle = `rgba(255,255,255,${0.72 + pulse*0.25})`;
+        hctx.shadowBlur = 7 + pulse*7; hctx.shadowColor = 'rgba(255,255,255,.95)';
+        hctx.beginPath();
+        hctx.arc(n.x * hw + cox * 0.3, n.y * hh + coy * 0.3, 2.0 + pulse*0.8, 0, Math.PI * 2);
+        hctx.fill(); hctx.shadowBlur = 0;
+      });
+      requestAnimationFrame(hframe);
+    }
+    addEventListener('resize', hresize);
+    hresize();
+    hframe();
+  }
+
+  /* parallax hero content */
+  const heroContent = document.getElementById('heroContent');
+  if (heroContent) {
+    addEventListener('mousemove', e => {
+      if (!document.getElementById('screenIntro')?.classList.contains('on')) return;
+      const px = (e.clientX / innerWidth - 0.5) * 18;
+      const py = (e.clientY / innerHeight - 0.5) * 12;
+      heroContent.style.transform = `translate(${px}px, ${py}px)`;
+    }, { passive: true });
+  }
+})();
+</script>
+
+<script type="importmap">
+{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+/* Industrial digital twin — automotive cell style (DELMIA-inspired) */
+const layout = {
+  'R-01':[-5.5, -3.2], 'R-02':[-1.5, -3.8], 'R-03':[2.5, -3.0],
+  'R-04':[5.5, -1.0], 'R-05':[-5.0, 1.5], 'R-06':[-1.5, 2.2],
+  'R-07':[2.2, 2.0], 'R-08':[5.2, 3.5]
+};
+
+const canvas = document.getElementById('c3d');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setClearColor(0xc8ccd0);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+const scene = new THREE.Scene();
+scene.fog = new THREE.Fog(0xc8ccd0, 28, 55);
+
+const camera = new THREE.PerspectiveCamera(38, 2, 0.1, 100);
+camera.position.set(11, 9, 13);
+
+const controls = new OrbitControls(camera, canvas);
+controls.enableDamping = true;
+controls.dampingFactor = 0.06;
+controls.maxPolarAngle = Math.PI * 0.45;
+controls.minDistance = 8;
+controls.maxDistance = 36;
+controls.target.set(0, 1.4, 0.5);
+
+/* lighting — factory hall */
+scene.add(new THREE.AmbientLight(0xc8d0d8, 0.55));
+const sun = new THREE.DirectionalLight(0xfff5e8, 1.15);
+sun.position.set(12, 24, 10);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+sun.shadow.camera.left = sun.shadow.camera.bottom = -18;
+sun.shadow.camera.right = sun.shadow.camera.top = 18;
+sun.shadow.camera.far = 50;
+sun.shadow.bias = -0.0003;
+scene.add(sun);
+const fill = new THREE.DirectionalLight(0x8a9aaa, 0.35);
+fill.position.set(-10, 12, -8);
+scene.add(fill);
+[[-6, 5, -4], [6, 5, 4], [0, 6, 0]].forEach(([x,y,z]) => {
+  const pl = new THREE.PointLight(0xdde4ee, 0.25, 16);
+  pl.position.set(x, y, z);
+  scene.add(pl);
+});
+
+/* factory floor */
+const floorMat = new THREE.MeshStandardMaterial({ color: 0xd8dce0, roughness: 0.85, metalness: 0.08 });
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(36, 36), floorMat);
+floor.rotation.x = -Math.PI / 2;
+floor.receiveShadow = true;
+scene.add(floor);
+const grid = new THREE.GridHelper(36, 36, 0x9aa0a6, 0xb8bcc0);
+grid.position.y = 0.02;
+scene.add(grid);
+
+/* materials */
+const matOrange = new THREE.MeshStandardMaterial({ color: 0xb0b4ba, roughness: 0.42, metalness: 0.45 });
+const matOrangeDark = new THREE.MeshStandardMaterial({ color: 0x8a8e96, roughness: 0.45, metalness: 0.4 });
+const matWhite = new THREE.MeshStandardMaterial({ color: 0xd8dce2, roughness: 0.4, metalness: 0.25 });
+const matGray = new THREE.MeshStandardMaterial({ color: 0x5a5e66, roughness: 0.55, metalness: 0.4 });
+const matDark = new THREE.MeshStandardMaterial({ color: 0x2e3238, roughness: 0.6, metalness: 0.3 });
+const matYellow = new THREE.MeshStandardMaterial({ color: 0xf0c000, roughness: 0.5, metalness: 0.2 });
+const matMetal = new THREE.MeshStandardMaterial({ color: 0x8a9098, roughness: 0.35, metalness: 0.7 });
+const matRisk = new THREE.MeshStandardMaterial({ color: 0xd4a017, roughness: 0.4, metalness: 0.3, emissive: 0x443300, emissiveIntensity: 0.2 });
+const matFail = new THREE.MeshStandardMaterial({ color: 0x8b3030, roughness: 0.45, metalness: 0.25, emissive: 0x440000, emissiveIntensity: 0.25 });
+
+/* safety fencing */
+function fence(x1, z1, x2, z2, h = 1.8) {
+  const dx = x2 - x1, dz = z2 - z1;
+  const len = Math.hypot(dx, dz);
+  const midX = (x1 + x2) / 2, midZ = (z1 + z2) / 2;
+  const bar = new THREE.Mesh(new THREE.BoxGeometry(len, 0.06, 0.06), matDark);
+  bar.position.set(midX, h, midZ);
+  bar.rotation.y = Math.atan2(dx, dz);
+  scene.add(bar);
+  const bar2 = bar.clone(); bar2.position.y = h * 0.55; scene.add(bar2);
+  for (let i = 0; i <= 6; i++) {
+    const t = i / 6;
+    const post = new THREE.Mesh(new THREE.BoxGeometry(0.08, h, 0.08), matDark);
+    post.position.set(x1 + dx * t, h / 2, z1 + dz * t);
+    post.castShadow = true;
+    scene.add(post);
+  }
+}
+fence(-10, -8, 10, -8);
+fence(-10, 8, 10, 8);
+fence(-10, -8, -10, 8);
+fence(10, -8, 10, 8);
+
+/* yellow safety barriers */
+[[-8, -6], [8, -6], [-8, 6], [8, 6]].forEach(([x, z]) => {
+  const b = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.9, 0.25), matYellow);
+  b.position.set(x, 0.45, z);
+  b.castShadow = true;
+  scene.add(b);
+});
+
+/* work tables (white elevated) */
+[[-3, -2.5], [1, -2.2], [4.5, 0.5], [-3.5, 2.5]].forEach(([x, z], i) => {
+  const leg = matGray;
+  const top = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.12, 1.6), matWhite);
+  top.position.set(x, 1.05, z);
+  top.castShadow = true;
+  top.receiveShadow = true;
+  scene.add(top);
+  [[-0.9, -0.55], [0.9, -0.55], [-0.9, 0.55], [0.9, 0.55]].forEach(([lx, lz]) => {
+    const p = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.0, 0.12), leg);
+    p.position.set(x + lx, 0.5, z + lz);
+    p.castShadow = true;
+    scene.add(p);
+  });
+  // metal panel on table
+  const panel = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.08, 0.9), matMetal);
+  panel.position.set(x, 1.15, z);
+  panel.castShadow = true;
+  scene.add(panel);
+});
+
+/* control cabinets */
+[[-9, 0], [9, 2]].forEach(([x, z]) => {
+  const cab = new THREE.Mesh(new THREE.BoxGeometry(1.2, 2.2, 0.8), matGray);
+  cab.position.set(x, 1.1, z);
+  cab.castShadow = true;
+  scene.add(cab);
+  const face = new THREE.Mesh(new THREE.BoxGeometry(1.05, 0.9, 0.05), matDark);
+  face.position.set(x + (x < 0 ? 0.55 : -0.55), 1.4, z);
+  scene.add(face);
+});
+
+/* KUKA-style industrial robot */
+function makeIndustrialRobot(useWhite = false) {
+  const g = new THREE.Group();
+  const baseCol = useWhite ? matWhite : matOrange;
+  const linkCol = useWhite ? matWhite : matOrangeDark;
+
+  // base
+  const base = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.65, 0.35, 16), matGray);
+  base.position.y = 0.18;
+  base.castShadow = true;
+  base.receiveShadow = true;
+  g.add(base);
+
+  // swivel
+  const swivel = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.4, 0.45, 12), baseCol.clone());
+  swivel.position.y = 0.55;
+  swivel.castShadow = true;
+  g.add(swivel);
+
+  // lower arm
+  const lower = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.9, 0.35), linkCol.clone());
+  lower.position.set(0, 1.15, 0.1);
+  lower.castShadow = true;
+  g.add(lower);
+
+  // elbow joint
+  const elbow = new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 10), baseCol.clone());
+  elbow.position.set(0, 1.65, 0.15);
+  elbow.castShadow = true;
+  g.add(elbow);
+
+  // upper arm
+  const upper = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.75, 0.28), linkCol.clone());
+  upper.position.set(0.15, 2.05, 0.25);
+  upper.rotation.z = -0.4;
+  upper.castShadow = true;
+  g.add(upper);
+
+  // wrist
+  const wrist = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.14, 0.35, 10), baseCol.clone());
+  wrist.position.set(0.35, 2.4, 0.4);
+  wrist.rotation.z = Math.PI / 2;
+  wrist.castShadow = true;
+  g.add(wrist);
+
+  // tool
+  const tool = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.15, 0.35), matDark);
+  tool.position.set(0.5, 2.4, 0.55);
+  tool.castShadow = true;
+  g.add(tool);
+
+  // status ring on floor
+  const ring = new THREE.Mesh(
+    new THREE.RingGeometry(0.75, 0.9, 32),
+    new THREE.MeshBasicMaterial({ color: 0x36e29a, transparent: true, opacity: 0.55, side: THREE.DoubleSide })
+  );
+  ring.rotation.x = -Math.PI / 2;
+  ring.position.y = 0.03;
+  g.add(ring);
+
+  g.userData.parts = [swivel, lower, elbow, upper, wrist];
+  g.userData.ring = ring;
+  g.userData.arm = upper;
+  return g;
+}
+
+const meshes = {};
+Object.keys(layout).forEach((id, i) => {
+  const [x, z] = layout[id];
+  const white = i % 3 === 1; // mix orange + white robots
+  const m = makeIndustrialRobot(white);
+  m.position.set(x, 0, z);
+  m.rotation.y = Math.atan2(-x, -z) * 0.3 + (Math.random() - 0.5) * 0.5;
+  m.userData.id = id;
+  m.userData.kind = 'robot';
+  m.userData.index = robots.findIndex(r => r.id === id);
+  scene.add(m);
+  meshes[id] = m;
+
+  // label
+  const c = document.createElement('canvas');
+  c.width = 128; c.height = 40;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = 'rgba(20,22,26,0.85)';
+  ctx.beginPath(); ctx.roundRect(6, 6, 116, 28, 4); ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 16px Inter, sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(id, 64, 22);
+  const spr = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthTest: false }));
+  spr.position.set(x, 3.0, z);
+  spr.scale.set(1.5, 0.45, 1);
+  scene.add(spr);
+  m.userData.label = spr;
+});
+
+/* hanging cable hints */
+[[ -2, 3, -1], [3, 3, 1], [0, 3.2, 2]].forEach(([x, y, z]) => {
+  const cable = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.03, 0.03, 2.5, 6),
+    matDark
+  );
+  cable.position.set(x, y, z);
+  scene.add(cable);
+});
+
+const motion = {};
+const extraSlots = [
+  [-7, -1], [7, -2], [-6, 4], [6, 5.5], [0, 5], [-3, -5], [3, -5], [0, -6]
+];
+let slotIdx = 0;
+
+Object.keys(layout).forEach(id => {
+  motion[id] = {
+    phase: Math.random() * Math.PI * 2,
+    speed: 1.0 + Math.random() * 0.8,
+    walk: 0.15 + Math.random() * 0.1,
+    origin: layout[id].slice()
+  };
+});
+
+function animateArms(t) {
+  Object.keys(meshes).forEach(id => {
+    const m = meshes[id];
+    const mot = motion[id];
+    if (!m || !mot) return;
+    const idx = m.userData.index;
+    if (failed.has(idx)) {
+      // failed: arms hang, ring red already
+      if (m.userData.arm) m.userData.arm.rotation.z = -0.1;
+      return;
+    }
+    // arm sweep
+    if (m.userData.arm) {
+      m.userData.arm.rotation.z = -0.45 + Math.sin(t * mot.speed + mot.phase) * 0.4;
+    }
+    // base rotate
+    m.rotation.y = mot.phase * 0.2 + Math.sin(t * 0.35 + mot.phase) * 0.5;
+    // small patrol circle
+    const ox = mot.origin[0], oz = mot.origin[1];
+    m.position.x = ox + Math.cos(t * mot.walk + mot.phase) * 0.55;
+    m.position.z = oz + Math.sin(t * mot.walk + mot.phase) * 0.55;
+  });
+}
+
+window.spawnRobot3D = function(index) {
+  const r = robots[index];
+  if (!r || meshes[r.id]) return;
+  const slot = extraSlots[slotIdx % extraSlots.length];
+  slotIdx++;
+  layout[r.id] = slot;
+  const m = makeIndustrialRobot(index % 2 === 0);
+  m.position.set(slot[0], 0, slot[1]);
+  m.userData.id = r.id;
+  m.userData.kind = 'robot';
+  m.userData.index = index;
+  scene.add(m);
+  meshes[r.id] = m;
+  motion[r.id] = {
+    phase: Math.random() * Math.PI * 2,
+    speed: 1.0 + Math.random() * 0.8,
+    walk: 0.15 + Math.random() * 0.1,
+    origin: slot.slice()
+  };
+  // label
+  const c = document.createElement('canvas');
+  c.width = 160; c.height = 40;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = 'rgba(20,22,26,0.9)';
+  ctx.beginPath(); ctx.roundRect(4, 6, 152, 28, 4); ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 14px Inter, sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(r.id + ' ' + r.name.slice(0, 12), 80, 22);
+  const spr = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthTest: false }));
+  spr.position.set(slot[0], 3.0, slot[1]);
+  spr.scale.set(2.0, 0.5, 1);
+  scene.add(spr);
+  m.userData.label = spr;
+  update3DColors();
+  focusRobot3D(index);
+};
+
+window.update3DColors = function() {
+  robots.forEach((r, i) => {
+    const m = meshes[r.id];
+    if (!m) return;
+    let ringC = 0x9aa3ad; // minimalist
+    let bodyC = 0xb0b4ba;
+    if (failed.has(i)) { ringC = 0xff5470; bodyC = 0xc43040; }
+    else if (st(i) === 'risk') { ringC = 0xd0a040; bodyC = 0xa89870; }
+    if (m.userData.ring) m.userData.ring.material.color.setHex(ringC);
+    m.userData.parts?.forEach(p => {
+      if (p.material && p.material.color) {
+        p.material.color.setHex(bodyC);
+        if (failed.has(i) && p.material.emissive) {
+          p.material.emissive.setHex(0x551010);
+          p.material.emissiveIntensity = 0.25;
+        } else if (p.material.emissive) {
+          p.material.emissive.setHex(0x000000);
+          p.material.emissiveIntensity = 0;
+        }
+      }
+    });
+  });
+};
+
+window.focusRobot3D = function(i) {
+  const m = meshes[robots[i].id];
+  if (!m) return;
+  controls.target.set(m.position.x, 1.2, m.position.z);
+  camera.position.set(m.position.x + 5, 9, m.position.z + 7);
+  Object.values(meshes).forEach(x => x.scale.setScalar(1));
+  m.scale.setScalar(1.12);
+};
+
+const ray = new THREE.Raycaster();
+const ptr = new THREE.Vector2();
+canvas.addEventListener('pointerdown', e => {
+  const rect = canvas.getBoundingClientRect();
+  ptr.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+  ptr.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+  ray.setFromCamera(ptr, camera);
+  const hits = ray.intersectObjects(Object.values(meshes), true);
+  if (!hits.length) return;
+  let o = hits[0].object;
+  while (o && !o.userData?.id) o = o.parent;
+  if (o?.userData?.kind === 'robot') selectRobot(o.userData.index);
+});
+
+window.resetCam = () => { camera.position.set(11, 9, 13); controls.target.set(0, 1.4, 0.5); };
+window.boostMove = () => {
+  const overlay=document.getElementById('cineOverlay');
+  if(overlay){overlay.classList.remove('on');void overlay.offsetWidth;overlay.classList.add('on');setTimeout(()=>overlay.classList.remove('on'),2900)}
+  Object.values(motion).forEach(m=>m.speed=2.5);
+  const start=camera.position.clone(), startTarget=controls.target.clone(), now=performance.now(), duration=2900;
+  const focus=robots[selected]?.id && meshes[robots[selected].id] ? meshes[robots[selected].id] : Object.values(meshes)[0];
+  const center=focus ? focus.position.clone().add(new THREE.Vector3(0,1.2,0)) : new THREE.Vector3(0,1.4,0);
+  let raf;
+  function cine(t){
+    const p=Math.min(1,(t-now)/duration), boomerang=p<.5?p*2:2-p*2, eased=boomerang*boomerang*(3-2*boomerang);
+    const ang=-1.0 + eased*1.65;
+    const radius=13-4*eased;
+    camera.position.set(center.x+Math.cos(ang)*radius, center.y+5.5+2.4*eased, center.z+Math.sin(ang)*radius);
+    controls.target.lerpVectors(startTarget,center,eased);
+    if(p<1) raf=requestAnimationFrame(cine);
+    else {cancelAnimationFrame(raf);camera.position.copy(start);controls.target.copy(startTarget);Object.values(motion).forEach(m=>m.speed=.8+Math.random()*.6)}
+  }
+  requestAnimationFrame(cine);toast('Cinematic sweep','3D twin is orbiting and returning like a boomerang');
+};
+
+window.onResize3D = function() {
+  const p = canvas.parentElement;
+  if (!p || p.clientWidth < 20) return;
+  camera.aspect = p.clientWidth / p.clientHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(p.clientWidth, p.clientHeight, false);
+};
+addEventListener('resize', onResize3D);
+
+let last = performance.now();
+function tick(t) {
+  requestAnimationFrame(tick);
+  const dt = Math.min(0.05, (t - last) / 1000);
+  last = t;
+  animateArms(t * 0.001);
+  // label follow
+  Object.values(meshes).forEach(m => {
+    if (m.userData.label) {
+      m.userData.label.position.x = m.position.x;
+      m.userData.label.position.z = m.position.z;
+    }
+    if (m.userData.ring && !failed.has(m.userData.index)) {
+      const s = 1 + Math.sin(t * 0.002 + m.userData.index) * 0.05;
+      m.userData.ring.scale.set(s, s, s);
+    }
+  });
+  controls.update();
+  renderer.render(scene, camera);
+}
+requestAnimationFrame(tick);
+update3DColors();
+</script>
+</body>
+</html>
